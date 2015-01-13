@@ -16,7 +16,7 @@ class NautyInterface(object):
             self.data = MolData(pdbStr, mtbStr)
         
     
-    def calcSym(self, log=None):
+    def calcEquivGroups(self, log=None):
         nautyInput = self._writeNautyInput()
         print nautyInput
         args = ["dreadnaut"]
@@ -42,18 +42,18 @@ class NautyInterface(object):
             expandedEqGroup = []
             for element in grp:
                 if ":" in element:
-                    start, stop = map(int,element.split(":"))
+                    start, stop = map(int,element.split(":"))             
                     expandedEqGroup.extend(range(start, stop + 1))
                 else:
                     expandedEqGroup.append(int(element))
-            self.data.symgroups[len(self.data.symgroups)] = expandedEqGroup
-         
-        print self.data.symgroups
+            
+            # append sym group and shift indexes up by 1
+            self.data.symgroups[len(self.data.symgroups)] = map(lambda x:x+1, expandedEqGroup)
         
-        
-        # store symmetry data
-        
-        #self.data[atmID]["symGr"] = int(symGrp)
+        for atmID, atm in self.data.atoms.keys():
+            for eqGrpID, eqGrp in self.data.symgroups.items():
+                if atm["index"] in eqGrp:
+                    self.data.atoms[atmID]["symGr"] = int(eqGrpID)             
         
 
     def _writeNautyInput(self):
