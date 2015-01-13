@@ -13,80 +13,62 @@ class NautyInterface(object):
         if atbDataObj is not None:
             self.data = atbDataObj
         else:
-            self.data = CGPData(pdbStr, mtbStr)
+            self.data = MolData(pdbStr, mtbStr)
         
     
-    def calcSym(self, log=None, method=None):
-        stdinput, args = self._genSymInput(log, method)
-        lgfString = _run(args,stdinput,errorLog=log)
-        
-        if len(lgfString) == 0:
+    def calcSym(self, log=None):
+        nautyInput = self._writeNautyInput()
+        print nautyInput
+        args = ["dreadnaut"]
+        nautyStdout = _run(args, nautyInput, errorLog=log)
+        print nautyStdout
+        if len(nautyStdout) == 0:
             if log is not None:
                 log.warning("calcSym: symmetrize produced no output; could be due to timeout")
             return ""
-        # update charges after sym
-        nodeBlock=False
-        lgf_lines = lgfString.splitlines()
-        i = 0
-        while i < len(lgf_lines):
-            line = lgf_lines[i]
-            if line.startswith("#"):    continue
-            if not nodeBlock and line.strip() == "@nodes":
-                nodeBlock=True
-                i += 2 # skip the label block
-                continue
-            if line.strip() == "@edges":
-                nodeBlock=False
-                break
-            if nodeBlock:
-                #charge, atomID, atmName, atomType, coordX, coordY, coordZ, initColor, symGrp
-                (atmCh, atmID, _, _, _, _, _, _, symGrp) = line.split()[0:9]
-                symGrp = int(symGrp)
-                atmID = int(atmID)
-                # update atomic charge after sym
-                self.data[atmID]["charge"] = float(atmCh)
-                
-                # store symmetry data
-                self.data[atmID]["symGr"] = int(symGrp)
-                if symGrp != -1:
-                    if symGrp not in self.data.symgroups.keys():
-                        self.data.symgroups[symGrp] = [atmID]
-                    else:
-                        self.data.symgroups[symGrp].append(atmID)
-                        
-                i += 1
-        return self.data.symgroups
         
+        self._procNautyOutput(nautyStdout)
         
-    def _genSymInput(self, log=None, method=None):
-        
-        lgfString = self._writeLGF()
-        args = [PATH_TO_SYM]
-        args.extend(["-symMaxDiff", str(self.symMaxDiff)])
-        args.extend(["-n", "-1"])
-        args.extend(["-deg1"])
-        return lgfString, args
     
-    def _writeLGF(self):
+    def _procNautyOutput(self, nautyStdout):
+        #get orbitals line
+        orbitalsLine = nautyStdout.splitlines()[-1].strip()
         
-        # build lgf file with molecule data
-        nodes = "@nodes\n" \
-                "partial_charge    label    label2    atomType    coordX    coordY    coordZ    initColor\n"
-        edges = "@edges\n" \
-                "                    label\n"
-        attributes = "@attributes\n"
-        for atm in self.data.atoms.values():
-            nodes += "%8.3f %8s %8s %8s %8.4f %8.4f %8.4f %8s\n" % (atm["charge"], atm["index"], atm["symbol"], atm["iacm"], atm["ocoord"][0],atm["ocoord"][1],atm["ocoord"][2],atm["index"]) 
+        # last item in each group is the number of nodes and not needed 
+        eqGroups = [grp.split()[:-1] for grp in orbitalsLine.split(";") if grp] 
         
-        count = 0
-        for bond in self.data.bonds:
-            count += 1
-            edges += "%s\t%s\t%s\n" % (bond['atoms'][0], bond['atoms'][1], count)
+        # expand ranges in each group
+        for grp in eqGroups:
+            expandedEqGroup = []
+            for element in grp:
+                if ":" in element:
+                    start, stop = map(int,element.split(":"))
+                    expandedEqGroup.extend(range(start, stop + 1))
+                else:
+                    expandedEqGroup.append(int(element))
+            self.data.symgroups[len(self.data.symgroups)] = expandedEqGroup
+         
+        print self.data.symgroups
         
-        lgfString = "%s\n%s\n%s" % (nodes, edges, attributes)
-        return lgfString.strip()
+        
+        # store symmetry data
+        
+        #self.data[atmID]["symGr"] = int(symGrp)
+        
+
+    def _writeNautyInput(self):
+        return  'n={numAtoms} g {nautyGraph}.'\
+                'f={partition} xo'.format(**{"numAtoms":len(self.data.atoms),
+                                             "nautyGraph":self.genNautyGraph(),
+                                             "partition":self.genPartion()}
+                                          )
     
-            
+    def genNautyGraph(self):
+        pass
+    
+    def genPartition(self):
+        pass
+    
 def _run(args, stdin, errorLog=None):
     tmp = tempfile.TemporaryFile(bufsize=0)
     tmp.write(stdin)
@@ -98,9 +80,9 @@ def _run(args, stdin, errorLog=None):
     tmp.close()
     if errorLog is not None:
         errorLog.debug(stderr)
-    return stdout
+    return stdout.strip()
 
-class CGPData(object):
+class MolData(object):
     atoms      = {}
     bonds     = []
     symgroups = {}
@@ -228,9 +210,14 @@ def parseCommandline():
             sys.exit(1)
     
     nautyInterface = NautyInterface(pdbStr=pdbStr, mtbStr=mtbStr)
+    
     # Run symmetrization
-    print nautyInterface.calcSym()
+    nautyInterface.calcSym()
+    print nautyInterface.data.symgroups
     
 
 if __name__=="__main__":
-    parseCommandline()
+    #parseCommandline()
+    nautyInterface = NautyInterface(open("testing/twoEq.pdb").read(), open("testing/twoEq.dat").read())
+    nautyInterface.calcSym()
+     
