@@ -31,11 +31,10 @@ class NautyInterface(object):
         
     
     def _procNautyOutput(self, nautyStdout):
-        #get orbitals line
-        orbitalsLine = nautyStdout.splitlines()[-1].strip()
+        orbitalData = nautyStdout.split("seconds")[-1].strip()
         
         # last item in each group is the number of nodes and not needed 
-        eqGroups = [grp.split()[:-1] for grp in orbitalsLine.split(";") if grp] 
+        eqGroups = [grp.split()[:-1] for grp in orbitalData.split(";") if grp] 
         
         # expand ranges in each group
         for grp in eqGroups:
@@ -50,7 +49,7 @@ class NautyInterface(object):
             # append sym group and shift indexes up by 1
             self.data.symgroups[len(self.data.symgroups)] = map(lambda x:x+1, expandedEqGroup)
         
-        for atmID, atm in self.data.atoms.keys():
+        for atmID, atm in self.data.atoms.items():
             for eqGrpID, eqGrp in self.data.symgroups.items():
                 if atm["index"] in eqGrp:
                     self.data.atoms[atmID]["symGr"] = int(eqGrpID)             
@@ -66,7 +65,7 @@ class NautyInterface(object):
     def genNautyGraph(self):
         graphStr = ""
         for bond in self.data.bonds:
-            graphStr += "{0}:{1};".format(*bond['atoms'])
+            graphStr += "{0}:{1};".format(*map(lambda x:x-1, bond['atoms']))
         return graphStr
     
     def genNautyPartition(self):
@@ -93,6 +92,7 @@ def _run(args, stdin, errorLog=None):
     proc = subprocess.Popen(args, stdin=tmp, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     
     stdout, stderr = proc.communicate()
+    print stderr
     tmp.close()
     if errorLog is not None:
         errorLog.debug(stderr)
@@ -234,6 +234,8 @@ def parseCommandline():
 
 if __name__=="__main__":
     #parseCommandline()
-    nautyInterface = NautyInterface(open("testing/twoEq.pdb").read(), open("testing/twoEq.dat").read())
-    nautyInterface.calcSym()
+    nautyInterface = NautyInterface(open("testing/manyEqGrps.pdb").read(), open("testing/manyEqGrps.mtb").read())
+    nautyInterface.calcEquivGroups()
+    print nautyInterface.data.symgroups
+    #print "\n".join([str((at["index"], at["symGr"])) for at in nautyInterface.data.atoms.values()])
      
