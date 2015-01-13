@@ -58,16 +58,32 @@ class NautyInterface(object):
 
     def _writeNautyInput(self):
         return  'n={numAtoms} g {nautyGraph}.'\
-                'f={partition} xo'.format(**{"numAtoms":len(self.data.atoms),
+                'f=[{partition}] xo'.format(**{"numAtoms":len(self.data.atoms),
                                              "nautyGraph":self.genNautyGraph(),
-                                             "partition":self.genPartion()}
+                                             "partition":self.genNautyPartition()}
                                           )
     
     def genNautyGraph(self):
-        pass
+        graphStr = ""
+        for bond in self.data.bonds:
+            graphStr += "{0}:{1};".format(*bond['atoms'])
+        return graphStr
     
-    def genPartition(self):
-        pass
+    def genNautyPartition(self):
+        # atomTypes is a dictionnary where keys are iacm's (ex:12 for C) and values are a list of matching atom indexes. 
+        # Ex: {'12': [2, 4, 7, 10, 13, 16], '20': [1, 3, 5, 6, 8, 9, 11, 12, 14, 15, 17, 18]}
+        atomTypes = {}
+
+        # Accumulate atom indexes
+        for atm in self.data.atoms.values():
+            atomTypes.setdefault(atm['iacm'],[]).append(atm['index'])
+
+        # Shift atom indexes by one to match dreadnaut's convention (starts at 0)
+        for atomType in atomTypes.keys():
+            atomTypes[atomType] = map(lambda x:x-1, atomTypes[atomType])
+
+        # Format it in dreadnaut's partition format. Ex: 1,2,3|4,5,6
+        return '|'.join( [ ','.join( map(str,v) ) for v in atomTypes.values() ] )
     
 def _run(args, stdin, errorLog=None):
     tmp = tempfile.TemporaryFile(bufsize=0)
