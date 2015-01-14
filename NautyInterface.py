@@ -2,6 +2,7 @@ import subprocess
 import sys
 from optparse import OptionParser
 import tempfile
+from chiral import *
 
 PATH_TO_SYM = "/usr/local/bin/symmetrize"
 
@@ -319,5 +320,6 @@ if __name__=="__main__":
     nautyInterface = NautyInterface(open("testing/manyEqGrps.pdb").read(), open("testing/manyEqGrps.mtb").read())
     nautyInterface.calcEquivGroups()
     print nautyInterface.data.symgroups
+    wrongChemicalEquivalencies(nautyInterface.data)
     #print "\n".join([str((at["index"], at["symGr"])) for at in nautyInterface.data.atoms.values()])
      
