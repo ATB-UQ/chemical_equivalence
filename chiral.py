@@ -1,6 +1,6 @@
 import collections
 
-def is_chiral(atom_index)
+def is_chiral(atom_index):
     # Chiral centers should have at least three neighbours
     return false if less than 3 neighbours
     # Get back the equivalence groups of the neighbours
