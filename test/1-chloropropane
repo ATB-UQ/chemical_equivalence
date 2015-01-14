@@ -1,0 +1,35 @@
+# Molecule ID
+3170
+
+# Atoms
+1 H1
+2 Cl
+3 H3
+4 C4
+5 C5
+6 H6
+7 H7
+8 C8
+9 H9
+10 H10
+11 H11
+
+# Bonds
+1 4
+2 4
+3 4
+4 5
+5 6
+5 7
+5 8
+8 9
+8 10
+8 11
+
+# Equivalence groups before correction
+1 H6 H7
+2 H9 H10 H11
+
+# Equivalence groups after correction
+1 H6 H7
+2 H9 H10 H11
