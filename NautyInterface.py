@@ -2,7 +2,7 @@ import subprocess
 import tempfile
 
 class NautyInterface(object):
-
+    
     def __init__(self, molData):
         self.data = molData
     

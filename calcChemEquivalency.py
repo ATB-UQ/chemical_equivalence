@@ -1,14 +1,21 @@
 from NautyInterface import NautyInterface
 from molData import MolData
 from optparse import OptionParser
-
+from chiral import wrongChemicalEquivalencies
 symMaxDiff = 0.2 #Maximum absolute charge difference allowed for atoms
     
 
 def getChemEquivGroups(molData, log=None):
     
     nautyInterface = NautyInterface(molData)
+    
     nautyInterface.calcEquivGroups(log)
+    
+    while wrongChemicalEquivalencies(molData):
+        nautyInterface.calcEquivGroups(log)
+        
+    print nautyInterface.data.symgroups
+    print "\n".join([str((at["index"], at["symGr"])) for at in nautyInterface.data.atoms.values()])
     
     
     
@@ -57,13 +64,9 @@ def parseCommandline():
     
 
 if __name__=="__main__":
-    data = MolData(open("testing/manyEqGrps.pdb").read(), open("testing/manyEqGrps.mtb").read())
     #parseCommandline()
-    nautyInterface = NautyInterface(data)
-    nautyInterface.calcEquivGroups()
-    print nautyInterface.data.symgroups
-    #print "\n".join([str((at["index"], at["symGr"])) for at in nautyInterface.data.atoms.values()])
-     
-
-    
-    
+    #data = MolData(open("testing/pseudoChiral.pdb").read(), open("testing/pseudoChiral.mtb").read())
+    #data = MolData(open("testing/glucose.pdb").read(), open("testing/glucose.dat").read())
+    #data = MolData(open("testing/trueChiral.pdb").read(), open("testing/trueChiral.mtb").read())
+    data = MolData(open("testing/1-chloro-1-bromopropane.pdb").read(), open("testing/1-chloro-1-bromopropane.mtb").read())
+    getChemEquivGroups(data)

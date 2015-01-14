@@ -1,37 +1,56 @@
-import collections
+def getNeighboursEquivalenceGroups(atom, molData):
+        # Get back the equivalence groups of the neighbours and their id's
+        listIDEq = [(neighbour, molData.atoms[neighbour]["symGr"]) for neighbour in atom["conn"] if molData.atoms[neighbour]["symGr"] != -1 ]
+        # return dictionary of: id's -> equivalence groups
+        return dict(listIDEq) 
 
-def is_chiral(atom):
-    pass
-    # Chiral centers should have at least three neighbours
-    if len(atom['conn']) <= 2: return False;
-    # Get back the equivalence groups of the neighbours
-    neighbours_equivalence_groups = [-1,-1,1,2]
-    # Filter out atoms in no eq group, e.g. -1's
-    neighbours_equivalence_groups = filter(lambda x: x!=-1,neighbours_equivalence_groups)
-    # If not two atoms in the same equivalence group
-    return not [x for x, y in collections.Counter(neighbours_equivalence_groups).items() if y >= 2]
+
+        
+def is_chiral(molData):
+    for atom in molData.atoms.values():
+        # Chiral centers should have at least three neighbours
+        if len(atom['conn']) <= 2: continue
+        
+        # Get back the equivalence groups of the neighbours
+        neighbours_equivalence_groups = getNeighboursEquivalenceGroups(atom, molData)
+        # If not two atoms in the same equivalence group
+        if not [x for x, y in counter(neighbours_equivalence_groups.values()).items() if y >= 2]: 
+            return True
+    return False
 
 
 # Pseudo-code for poisoning groups
 
-def wrongChemicalEquivalencies(nautyData):
+def wrongChemicalEquivalencies(molData):
     should_rerun = False
     # If there is a chiral center in a molecule
-    print any( [is_chiral(atm) for atm in nautyData.atoms.values()] )
-    if any( [is_chiral(atm) for atm in nautyData.atoms.values()] ) :
-        pass
+    
+    if is_chiral(molData):
+        print "IS CHIRAL. LOOKING FOR DIASTEREOTOPIC ATOMS."
         # For every atom 'atm'
-    #    for atm in atoms:
-            # If there is exactly two equivalent neighbours bonded to the 'atm' atom
-                # Then these two neighbours are actually diasterotopic and are therefore not chemically equivalent
-                # Therefore, they should manually be made non equivalent
-                # And the chemical equivalency algorithm should be re-run to avoid atoms further down the graph be considered equivalent
-    #            should_rerun = True
-    #    return should_rerun
-    #else:
-    #    return False
+        for atom in molData.atoms.values():
+            # Get back the equivalence groups of the neighbours
+            neighbours_equivalence_groups = getNeighboursEquivalenceGroups(atom, molData)
+            for equivGrpID, occurence in counter(neighbours_equivalence_groups.values()).items():
+                # If there are exactly two equivalent neighbours bonded to the 'atm' atom 
+                if occurence == 2:
+                    # Then these two neighbours are actually diasterotopic and are therefore not chemically equivalent
+                    # Therefore, they should manually be made non equivalent
+                    # And the chemical equivalency algorithm should be re-run to avoid atoms further down the graph be considered equivalent
+                    atomIDs = [atomID for atomID, grpID in neighbours_equivalence_groups.items() if equivGrpID==grpID]
+                    print "FOUND 2 DIASTEROTOPIC ATOMS: {0}".format(atomIDs)
+                    should_rerun = True
+        return should_rerun
+    else:
+        print "NOT CHIRAL"
+        return False
 
-
+def counter(iterable):
+    retDict = {}
+    for i in iterable:
+        retDict.setdefault(i, 0)
+        retDict[i] += 1
+    return retDict
 
 
 # Called like this

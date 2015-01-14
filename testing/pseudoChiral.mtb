@@ -1,11 +1,11 @@
 #----------------------------TITLE -------------------------------------------
-#    (HEX)
+#   
 #
-# This file was generated at 02:14 on 2014-09-18 by
+# This file was generated at 15:32 on 2015-01-14 by
 #
 #                  Automatic Topology Builder  
 #
-#                   REVISION 2014-09-11
+#                   REVISION 2015-01-13
 #-----------------------------------------------------------------------------
 # Authors     : Alpeshkumar K. Malde, Le Zuo, Matthew Breeze, Martin Stroet, Alan E. Mark
 #
@@ -40,7 +40,7 @@
 #      for those fields that could not be determined automatically. The parameters in these fields must be assigned manually
 #      before the file can be used.
 #-----------------------------------------------------------------------------
-# Input Structure : _ICZ
+# Input Structure : _UKB
 # Output          : ALL ATOM topology
 #	Use in conjunction with the corresponding all atom PDB file.
 #----------------------------------------------------------------------------
@@ -52,9 +52,9 @@
 # If required, additional bonded parameters were generated from a Hessian matrix calculated at the B3LYP/6-31G* level of theory.
 #
 TITLE
-    Topology file generated at 02:09 on 18 Sep 2014 for molecule
-     (HEX) (IUPAC: hexane, database identifier: _ICZ)
-    by Automatic Topology Builder(revision 2014-09-11).
+    Topology file generated at 15:01 on 14 Jan 2015 for molecule
+     (IUPAC: chloroethene, database identifier: _UKB)
+    by Automatic Topology Builder(revision 2015-01-13).
 END
 FORCEFIELD
 54A7
@@ -76,116 +76,56 @@ LINKEXCLUSIONS
 END
 MTBUILDBLSOLUTE
 # RNME
-_ICZ
+_UKB
 # number of atoms, number of preceding exclusions
 # NMAT, NLIN
-   20    0
+    6    0
 # preceding exclusions
 # ATOM           MAE MSAE
 # atoms
 # The total charge within a charge group is given in the comments.
-# ATOM  ANM IACM MASS  CGM   ICGM  MAE  MSAE                          group charge
-    1   H2   20    1   0.067   0    4    2    3    4    5
-    2   C1   12   12  -0.295   0    6    3    4    5    6    7    8
-    3   H1   20    1   0.067   0    2    4    5
-    4   H3   20    1   0.067   0    1    5
-    5   C2   12   12   0.212   0    6    6    7    8    9   10   11
-    6   H4   20    1  -0.036   0    2    7    8
-    7   H5   20    1  -0.036   0    1    8
-    8   C3   12   12  -0.063   0    6    9   10   11   12   13   14
-    9   H6   20    1   0.010   0    2   10   11
-   10   H7   20    1   0.010   1    1   11                            #  0.003
-   11   C4   12   12  -0.063   0    6   12   13   14   15   16   17
-   12   H8   20    1   0.010   0    2   13   14
-   13   H9   20    1   0.010   0    1   14
-   14   C5   12   12   0.212   0    6   15   16   17   18   19   20
-   15  H10   20    1  -0.036   0    2   16   17
-   16  H11   20    1  -0.036   0    1   17
-   17   C6   12   12  -0.301   0    3   18   19   20
-   18  H12   20    1   0.067   0    2   19   20
-   19  H13   20    1   0.067   0    1   20
-   20  H14   20    1   0.067   1    0                                 # -0.003
+# ATOM  ANM IACM MASS  CGM   ICGM  MAE  MSAE                group charge
+    1   H6   20    1   0.197   0    3    2    3    4
+    2   C2   12   12  -0.113   0    4    3    4    5    6
+    3  Cl3   33   35  -0.127   0    1    4
+    4   C1   12   12  -0.333   0    2    5    6
+    5   H4   20    1   0.188   0    1    6
+    6   H5   20    1   0.188   1    0                       #  0.000
 # total charge of the molecule:  -0.000
-# residue group charges redistributed:  0.000   0.000
+# residue group charges redistributed:  0.000
 # bonds
 #  NB
-   19
+    5
 # Alternative bond types are placed in comments.
 #  IB   JB   MCB
-    1    2   39 	
-    2    3   39 	#  3    
-    2    4   39 	#  3    
-    2    5   27 	
-    5    6   39 	
-    5    7   39 	
-    5    8   27 	
-    8    9   39 	
-    8   10   39 	
-    8   11   27 	
-   11   12   39 	
-   11   13   39 	
-   11   14   27 	
-   14   15   39 	
-   14   16   39 	
-   14   17   27 	
-   17   18   39 	#  3    
-   17   19   39 	#  3    
-   17   20   39 	
+    1    2    3 	
+    2    3   43 	
+    2    4   10 	
+    4    5    3 	
+    4    6    3 	
 # bond angles
 # NBA
-   36
+    6
 # Alternative angle types are placed in comments.
 #  IB   JB   KB   MCB
-    1    2    3   49 	
-    1    2    4   49 	
-    1    2    5  109 	#  non-standard 
-    3    2    4   43 	
-    3    2    5   14 	
-    4    2    5    8 	
-    2    5    6   44 	
-    2    5    7   13 	
-    2    5    8   15 	
-    6    5    7   57 	#  non-standard 
-    6    5    8   58 	#  non-standard 
-    7    5    8   58 	#  non-standard 
-    5    8    9   58 	#  non-standard 
-    5    8   10   58 	#  non-standard 
-    5    8   11   15 	
-    9    8   10   63 	#  non-standard 
-    9    8   11   48 	
-   10    8   11   48 	
-    8   11   12   48 	
-    8   11   13   48 	
-    8   11   14   15 	
-   12   11   13   57 	#  non-standard 
-   12   11   14   58 	#  non-standard 
-   13   11   14   58 	#  non-standard 
-   11   14   15   58 	#  non-standard 
-   11   14   16   58 	#  non-standard 
-   11   14   17   15 	
-   15   14   16   57 	#  non-standard 
-   15   14   17   48 	
-   16   14   17   48 	
-   14   17   18   14 	
-   14   17   19    8 	
-   14   17   20   56 	#  non-standard 
-   18   17   19   43 	
-   18   17   20   49 	
-   19   17   20   49 	
+    1    2    3   43 	
+    1    2    4   36 	#  25   37   
+    3    2    4   37 	
+    2    4    5   35 	
+    2    4    6   25 	
+    5    4    6   53 	
 # improper dihedrals 
 # NIDA
-    0
+    2
 #  IB   JB   KB   LB   MCB
+    4    2    5    6    1
+    2    1    3    4    1
 # dihedrals
 # MCBs values have not been optimized. Possible alternatives are in comments.
 # NDA
-    5
+    1
 #  IB   JB   KB   LB   MCB
-    3    2    5    8   34    
-    2    5    8   11   34    
-    5    8   11   14   34    
-    8   11   14   17   34    
-   11   14   17   18   34    
+    3    2    4    5   15    #  10  
 # LJ Exceptions
 # NEX
     0
