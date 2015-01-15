@@ -6,7 +6,7 @@ def getNeighboursEquivalenceGroups(atom, molData):
 
 
         
-def is_chiral(molData):
+def hasStereogenicCenters(molData):
     for atom in molData.atoms.values():
         # Chiral centers should have at least three neighbours
         if len(atom['conn']) <= 2: continue
@@ -25,8 +25,8 @@ def wrongChemicalEquivalencies(molData):
     should_rerun = False
     # If there is a chiral center in a molecule
     
-    if is_chiral(molData):
-        print "IS CHIRAL. LOOKING FOR DIASTEREOTOPIC ATOMS."
+    if hasStereogenicCenters(molData):
+        print "HAS STEREOGENIC CENTERS. LOOKING FOR DIASTEREOTOPIC ATOMS."
         # For every atom 'atm'
         for atom in molData.atoms.values():
             # Get back the equivalence groups of the neighbours
@@ -39,11 +39,13 @@ def wrongChemicalEquivalencies(molData):
                     # And the chemical equivalency algorithm should be re-run to avoid atoms further down the graph be considered equivalent
                     atomIDs = [atomID for atomID, grpID in neighbours_equivalence_groups.items() if equivGrpID==grpID]
                     print "FOUND 2 DIASTEROTOPIC ATOMS: {0}".format(atomIDs)
+                    for i, atomID in enumerate(atomIDs):
+                        molData[atomID]["flavour"] = i
                     should_rerun = True
         return should_rerun
     else:
-        print "NOT CHIRAL"
-        return False
+        print "HAS NO STEREOGENIC CENTERS."
+        return should_rerun
 
 def counter(iterable):
     retDict = {}

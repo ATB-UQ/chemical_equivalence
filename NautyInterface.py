@@ -7,6 +7,7 @@ class NautyInterface(object):
         self.data = molData
     
     def calcEquivGroups(self, log=None):
+        print "Running Nauty"
         nautyInput = self._writeNautyInput()
         
         args = ["dreadnaut"]
@@ -58,7 +59,7 @@ class NautyInterface(object):
                     break
             if not found:
                 self.data.atoms[atmID]["symGr"] = -1
-                         
+        return
         
 
     def _writeNautyInput(self):
@@ -81,7 +82,13 @@ class NautyInterface(object):
 
         # Accumulate atom indexes
         for atm in self.data.atoms.values():
-            atomTypes.setdefault(atm['iacm'],[]).append(atm['index'])
+            if atm.has_key("flavour"):
+                # append flavour to iacm in order to distinguish between diastereotopic atoms,
+                # the 1000 is chosen as a large number that is much greater than the 80 existing atom types
+                distinguishingID = 1000+atm["flavour"]
+                atomTypes.setdefault("{0}{1}".format(atm['iacm'], distinguishingID), []).append(atm['index'])
+            else:    
+                atomTypes.setdefault(atm['iacm'],[]).append(atm['index'])
 
         # Shift atom indexes by one to match dreadnaut's convention (starts at 0)
         for atomType in atomTypes.keys():

@@ -12,12 +12,34 @@ def getChemEquivGroups(molData, log=None):
     nautyInterface.calcEquivGroups(log)
     
     while wrongChemicalEquivalencies(molData):
+        clearEqGroupData(molData)
         nautyInterface.calcEquivGroups(log)
-        
-    print nautyInterface.data.symgroups
-    print "\n".join([str((at["index"], at["symGr"])) for at in nautyInterface.data.atoms.values()])
+    
+    # for highly symmetric molecules we don't want any diastereotopic atoms
+    # in any symmetry groups, so we'll remove them manually
+    atomsWithFlavour = []
+    for atomID, atom in molData.atoms.items():
+        if atom.has_key("flavour"):
+            atom["symGr"] = -1
+            atomsWithFlavour.append(atomID)
+    
+    for eqGrp in molData.symgroups.values():
+        matched = [atm for atm in atomsWithFlavour if atm in eqGrp] 
+        if matched:
+            for matchedAtom in matched:
+                eqGrp.remove(matchedAtom)
+    
+    # check that none of the symmetry groups are empty
+    molData.symgroups = dict([(k,v) for k,v in molData.symgroups.items() if v])
     
     
+    print molData.symgroups
+    print "\n".join([str((at["index"], at["symGr"])) for at in molData.atoms.values()])
+    
+def clearEqGroupData(molData):
+    molData.symgroups = {}
+    for atom in molData.atoms.values():
+        del atom["symGr"]
     
 def parseCommandline():
     # run CGP and symmetrization from commandline arguments
@@ -68,5 +90,6 @@ if __name__=="__main__":
     #data = MolData(open("testing/pseudoChiral.pdb").read(), open("testing/pseudoChiral.mtb").read())
     #data = MolData(open("testing/glucose.pdb").read(), open("testing/glucose.dat").read())
     #data = MolData(open("testing/trueChiral.pdb").read(), open("testing/trueChiral.mtb").read())
-    data = MolData(open("testing/1-chloro-1-bromopropane.pdb").read(), open("testing/1-chloro-1-bromopropane.mtb").read())
+    #data = MolData(open("testing/1-chloro-1-bromopropane.pdb").read(), open("testing/1-chloro-1-bromopropane.mtb").read())
+    data = MolData(open("testing/(1S,4S)-1,4-dibromo-1,4-dichloro-2,2,3,3-tetramethylbutane.pdb").read(), open("testing/(1S,4S)-1,4-dibromo-1,4-dichloro-2,2,3,3-tetramethylbutane.mtb").read())
     getChemEquivGroups(data)
