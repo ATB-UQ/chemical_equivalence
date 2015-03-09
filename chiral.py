@@ -27,7 +27,7 @@ def hasAllDifferentNeighbours(atom, molData):
     neighbours_equivalence_groups_filtered = dict(filter(lambda x:x[1] != -1, neighbours_equivalence_groups.items()))
     
     # check if all atoms are in different equivalence groups
-    return all([count == 1 for _, count in counter(neighbours_equivalence_groups_filtered).items()])
+    return all([count == 1 for _, count in cluster(neighbours_equivalence_groups_filtered).items()])
     
 
 def has4ConnectingGroups(atom):
@@ -41,7 +41,7 @@ def hasDiastereotopicNeighbours(neighbours_equivalence_groups, log):
     of the two atoms are different (this is an obscure and unlikely case but could occur). 
     '''
     countDiastereotopicGroups = 0
-    for _, occurence in counter(neighbours_equivalence_groups.values()).items():
+    for _, occurence in cluster(neighbours_equivalence_groups).items():
         # If there are exactly two equivalent neighbours bonded to the 'atm' atom 
         if occurence == MINIMUM_IDENTICAL_NEIGHBOUR_COUNT_FOR_CHIRAL:
             countDiastereotopicGroups += 1
@@ -59,7 +59,7 @@ def hasDiastereotopicNeighbours(neighbours_equivalence_groups, log):
         return False
 
 def getDiastereotopicAtomIDs(neighbours_equivalence_groups):
-    for equivGrpID, occurence in counter(neighbours_equivalence_groups.values()).items():
+    for equivGrpID, occurence in cluster(neighbours_equivalence_groups).items():
         # If there are exactly two equivalent neighbours bonded to the 'atm' atom 
         if occurence == MINIMUM_IDENTICAL_NEIGHBOUR_COUNT_FOR_CHIRAL:
             return [atomID for atomID, grpID in neighbours_equivalence_groups.items() if equivGrpID==grpID]
@@ -86,9 +86,18 @@ def containsDiastereotopicAtoms(molData, flavourCounter, log):
             should_rerun = True
     return should_rerun
 
+# Counts the occurence of a dictionnary's keys
 def counter(iterable):
     retDict = {}
     for i in iterable:
         retDict.setdefault(i, 0)
         retDict[i] += 1
+    return retDict
+
+# Counts the occurence of a dictionnary's keys
+def cluster(iterable):
+    retDict = {}
+    for value in iterable.values() :
+        retDict.setdefault(value, 0)
+        retDict[value] += 1
     return retDict

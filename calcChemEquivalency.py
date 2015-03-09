@@ -36,7 +36,7 @@ def chemicalEquivalenceExceptions(molData, flavourCounter, log):
     should_rerun = any([func(molData, flavourCounter, log) for func in exceptionSearchingFunctions])
     
     if log:
-        if should_rerun: log.info("Molecule contains chemical equivalence braking groups.")
+        if should_rerun: log.info("Molecule contains chemical equivalence breaking groups.")
         else:            log.info("Molecule has NO chemical equivalence breaking groups.")
         
     return should_rerun
@@ -93,8 +93,8 @@ def parseCommandline():
 if __name__=="__main__":
     #parseCommandline()
     #data = MolData(open("testing/pseudoChiral.pdb").read(), open("testing/pseudoChiral.mtb").read())
-    #data = MolData(open("testing/glucose.pdb").read(), open("testing/glucose.dat").read())
-    data = MolData(open("testing/trueChiral.pdb").read(), open("testing/trueChiral.mtb").read())
+    data = MolData(open("testing/glucose_AA.pdb").read(), open("testing/glucose_AA.dat").read())
+    #data = MolData(open("testing/trueChiral.pdb").read(), open("testing/trueChiral.mtb").read())
     #data = MolData(open("testing/1-chloro-1-bromopropane.pdb").read(), open("testing/1-chloro-1-bromopropane.mtb").read())
     #data = MolData(open("testing/(1S,4S)-1,4-dibromo-1,4-dichloro-2,2,3,3-tetramethylbutane.pdb").read(), open("testing/(1S,4S)-1,4-dibromo-1,4-dichloro-2,2,3,3-tetramethylbutane.mtb").read())
     #data = MolData(open("testing/CNT.pdb").read(), open("testing/CNT.mtb").read())

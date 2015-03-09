@@ -1,7 +1,7 @@
 DREADNAUT_SCRIPT = dreadnaut_script.txt
 
 python:
-	python NautyInterface.py 
+	python calcChemEquivalency.py 
 
 test:
 	cd testing && \
