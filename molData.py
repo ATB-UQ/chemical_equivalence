@@ -9,6 +9,10 @@ class MolData(object):
         self._readPDB(pdbStr)
         self._readMTB(mtbStr)
     
+    def get_id(self,index):
+        '''return id of the atom with specified index number'''
+        return [k for (k,v) in self.atoms.items() if v['index'] == index][0]
+    
     def __getitem__(self, atomid):
         '''return an atom with atomid. '''
         assert type(atomid) == int, 'Atom identifiers are integers'

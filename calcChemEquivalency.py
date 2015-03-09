@@ -3,7 +3,7 @@ from molData import MolData
 from optparse import OptionParser
 from chiral import containsDiastereotopicAtoms
 from doubleBonds import containsEquivalenceBreakingDoubleBond
-
+import logging
 symMaxDiff = 0.2 #Maximum absolute charge difference allowed for atoms
     
 
@@ -36,13 +36,13 @@ def chemicalEquivalenceExceptions(molData, flavourCounter, log):
     should_rerun = any([func(molData, flavourCounter, log) for func in exceptionSearchingFunctions])
     
     if log:
-        if should_rerun: log.info("Molecule has NO chemical equivalence breaking groups.")
-        else:            log.info("Molecule contains chemical equivalence braking groups.")
+        if should_rerun: log.info("Molecule contains chemical equivalence braking groups.")
+        else:            log.info("Molecule has NO chemical equivalence breaking groups.")
         
     return should_rerun
 
 def clearEqGroupData(molData):
-    molData.symgroups = {}
+    molData.equivalenceGroups = {}
     for atom in molData.atoms.values():
         del atom["equivalenceGroup"]
     
@@ -87,17 +87,19 @@ def parseCommandline():
     
     # Run symmetrization
     nautyInterface.calcSym()
-    print nautyInterface.data.symgroups
+    print nautyInterface.data.equivalenceGroups
     
 
 if __name__=="__main__":
     #parseCommandline()
-    data = MolData(open("testing/pseudoChiral.pdb").read(), open("testing/pseudoChiral.mtb").read())
+    #data = MolData(open("testing/pseudoChiral.pdb").read(), open("testing/pseudoChiral.mtb").read())
     #data = MolData(open("testing/glucose.pdb").read(), open("testing/glucose.dat").read())
-    #data = MolData(open("testing/trueChiral.pdb").read(), open("testing/trueChiral.mtb").read())
+    data = MolData(open("testing/trueChiral.pdb").read(), open("testing/trueChiral.mtb").read())
     #data = MolData(open("testing/1-chloro-1-bromopropane.pdb").read(), open("testing/1-chloro-1-bromopropane.mtb").read())
     #data = MolData(open("testing/(1S,4S)-1,4-dibromo-1,4-dichloro-2,2,3,3-tetramethylbutane.pdb").read(), open("testing/(1S,4S)-1,4-dibromo-1,4-dichloro-2,2,3,3-tetramethylbutane.mtb").read())
     #data = MolData(open("testing/CNT.pdb").read(), open("testing/CNT.mtb").read())
     #data = MolData(open("testing/stressTest.pdb").read(), open("testing/stressTest.mtb").read())
-    getChemEquivGroups(data)
+    
+    logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - [%(levelname)s] - %(message)s  -->  (%(module)s.%(funcName)s: %(lineno)d)', datefmt='%d-%m-%Y %H:%M:%S')
+    getChemEquivGroups(data, log=logging.getLogger())
     print "\n".join([str((at["index"], at["equivalenceGroup"])) for at in data.atoms.values()])

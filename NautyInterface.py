@@ -17,7 +17,6 @@ class NautyInterface(object):
             if log is not None:
                 log.warning("calcEquivGroups: dreadnaut produced no output")
             return ""
-        
         self._procNautyOutput(nautyStdout)
         
         if log: log.info("Equivalence groups: {0}".format(self._getLogInfo()))
@@ -107,6 +106,6 @@ def _run(args, stdin, errorLog=None):
     stdout, stderr = proc.communicate()
     
     tmp.close()
-    if errorLog is not None:
+    if stderr and errorLog:
         errorLog.debug(stderr)
     return stdout.strip()
