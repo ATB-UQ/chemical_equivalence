@@ -1,0 +1,164 @@
+#----------------------------TITLE -------------------------------------------
+#   
+#
+# This file was generated at 12:29 on 2015-01-15 by
+#
+#                  Automatic Topology Builder  
+#
+#                   REVISION 2015-01-13
+#-----------------------------------------------------------------------------
+# Authors     : Alpeshkumar K. Malde, Le Zuo, Matthew Breeze, Martin Stroet, Alan E. Mark
+#
+# Institute   : Molecular Dynamics group, 
+#               School of Chemistry and Molecular Biosciences (SCMB),
+#               The University of Queensland, QLD 4072, Australia
+# URL         : http://compbio.biosci.uq.edu.au/atb
+# Citation    : Malde AK, Zuo L, Breeze M, Stroet M, Poger D, Nair PC, Oostenbrink C, Mark AE.
+#               An Automated force field Topology Builder (ATB) and repository: version 1.0.
+#               Journal of Chemical Theory and Computation, 2011, 7(12), 4026-4037.
+#               http://pubs.acs.org/doi/abs/10.1021/ct200196m
+#
+# Disclaimer  : 
+#      While every effort has been made to ensure the accuracy and validity of parameters provided below
+#      the assignment of parameters is being based on an automated procedure combining data provided by a
+#      given user as well as calculations performed using third party software. They are provided as a guide.
+#      The authors of the ATB cannot guarantee that the parameters are complete or that the parameters provided
+#      are appropriate for use in any specific application. Users are advised to treat these parameters with discretion
+#      and to perform additional validation tests for their specific application if required. Neither the authors
+#      of the ATB or The University of Queensland except any responsibly for how the parameters may be used.
+#
+# Release notes and warnings: 
+#  (1) The topology is based on a set of atomic coordinates and other data provided by the user after
+#      after quantum mechanical optimization of the structure using different levels of theory depending on
+#      the nature of the molecule.
+#  (2) In some cases the automatic bond, bond angle and dihedral type assignment is ambiguous.
+#      In these cases alternative type codes are provided at the end of the line.
+#  (3) While bonded parameters are taken where possible from the nominated force field non-standard bond, angle and dihedral
+#      type code may be incorporated in cases where an exact match could not be found. These are marked as "non-standard"
+#      or "uncertain" in comments.
+#  (4) In some cases it is not possible to assign an appropriate parameter automatically. "%" is used as a place holder
+#      for those fields that could not be determined automatically. The parameters in these fields must be assigned manually
+#      before the file can be used.
+#-----------------------------------------------------------------------------
+# Input Structure : E8CM
+# Output          : ALL ATOM topology
+#	Use in conjunction with the corresponding all atom PDB file.
+#----------------------------------------------------------------------------
+# Initial Guess Topology Generation: 
+# The topology was generated from AM1 optimized geometry and MOPAC charges.
+# Bonded and van der Waals parameters were taken from the GROMOS 54A7 parameter set.
+#
+TITLE
+    Topology file generated at 12:01 on 15 Jan 2015 for molecule
+     (IUPAC: (1S,4S)-1,4-dibromo-1,4-dichlorobutane, database identifier: E8CM)
+    by Automatic Topology Builder(revision 2015-01-13).
+END
+FORCEFIELD
+54A7
+END
+PHYSICALCONSTANTS
+# FPEPSI: 1.0/(4.0*PI*EPS0) (EPS0 is the permittivity of vacuum)
+  0.1389354E+03
+# HBAR: Planck's constant HBAR = H/(2* PI)
+  0.6350780E-01
+# SPDL: Speed of light (in nm/ps)
+  2.9979245800E05
+# BOLTZ: Boltzmann's constant
+  8.31441E-03
+END
+LINKEXCLUSIONS
+#nearest neighbour exclusions when linking
+#NRNE
+   2
+END
+MTBUILDBLSOLUTE
+# RNME
+E8CM
+# number of atoms, number of preceding exclusions
+# NMAT, NLIN
+   14    0
+# preceding exclusions
+# ATOM           MAE MSAE
+# atoms
+# The total charge within a charge group is given in the comments.
+# ATOM  ANM IACM MASS  CGM   ICGM  MAE  MSAE                          group charge
+    1  Br3   34   80  -0.003   0    4    2    3    4    5
+    2   C2   12   12  -0.133   0    6    3    4    5    6    7    8
+    3  Cl1   33   35  -0.065   0    2    4    5
+    4   H9   20    1   0.138   0    1    5
+    5   C4   12   12  -0.168   0    6    6    7    8    9   10   11
+    6  H10   20    1   0.116   0    2    7    8
+    7  H11   20    1   0.116   1    1    8                            #  0.001
+    8   C5   12   12  -0.170   0    6    9   10   11   12   13   14
+    9  H12   20    1   0.116   0    2   10   11
+   10  H13   20    1   0.116   0    1   11
+   11   C6   12   12  -0.133   0    3   12   13   14
+   12  Cl7   33   35  -0.065   0    2   13   14
+   13  Br8   34   80  -0.003   0    1   14
+   14  H14   20    1   0.138   1    0                                 # -0.001
+# total charge of the molecule:   0.000
+# residue group charges redistributed:  0.000   0.000
+# bonds
+#  NB
+   13
+# Alternative bond types are placed in comments.
+#  IB   JB   MCB
+    1    2   64 	#  non-standard matched closest 
+    2    3   40 	
+    2    4   39 	
+    2    5   26 	
+    5    6   39 	
+    5    7   39 	
+    5    8   26 	
+    8    9   39 	
+    8   10   39 	
+    8   11   26 	
+   11   12   40 	
+   11   13   64 	#  non-standard matched closest 
+   11   14   39 	
+# bond angles
+# NBA
+   24
+# Alternative angle types are placed in comments.
+#  IB   JB   KB   MCB
+    1    2    3   51 	#  matched closest 
+    1    2    4   57 	#  non-standard matched closest 
+    1    2    5   44 	#  matched closest 
+    3    2    4   43 	
+    3    2    5   44 	
+    4    2    5   44 	#  matched closest 
+    2    5    6   47 	#  matched closest 
+    2    5    7   51 	#  matched closest 
+    2    5    8   15 	
+    6    5    7   43 	#  matched closest 
+    6    5    8    8 	#  matched closest 
+    7    5    8  109 	#  non-standard matched closest 
+    5    8    9  109 	#  non-standard matched closest 
+    5    8   10    8 	#  matched closest 
+    5    8   11   15 	
+    9    8   10   43 	#  matched closest 
+    9    8   11   51 	#  matched closest 
+   10    8   11   47 	#  matched closest 
+    8   11   12   44 	
+    8   11   13   44 	#  matched closest 
+    8   11   14   44 	#  matched closest 
+   12   11   13   51 	#  matched closest 
+   12   11   14   43 	
+   13   11   14   57 	#  non-standard matched closest 
+# improper dihedrals 
+# NIDA
+    0
+#  IB   JB   KB   LB   MCB
+# dihedrals
+# MCBs values have not been optimized. Possible alternatives are in comments.
+# NDA
+    3
+#  IB   JB   KB   LB   MCB
+    3    2    5    8   34    
+    2    5    8   11   34    
+    5    8   11   12   34    
+# LJ Exceptions
+# NEX
+    0
+END
+

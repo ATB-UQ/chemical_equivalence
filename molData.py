@@ -3,7 +3,7 @@
 class MolData(object):
     atoms      = {}
     bonds     = []
-    symgroups = {}
+    equivalenceGroups = {}
     
     def __init__(self, pdbStr, mtbStr):
         self._readPDB(pdbStr)

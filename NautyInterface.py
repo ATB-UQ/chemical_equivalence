@@ -7,7 +7,7 @@ class NautyInterface(object):
         self.data = molData
     
     def calcEquivGroups(self, log=None):
-        print "Running Nauty"
+        if log: log.info("Running Nauty")
         nautyInput = self._writeNautyInput()
         
         args = ["dreadnaut"]
@@ -24,7 +24,7 @@ class NautyInterface(object):
     
     def _getLogInfo(self):
         output = ""
-        for grpID, atomsIndexs in self.data.symgroups.items():
+        for grpID, atomsIndexs in self.data.equivalenceGroups.items():
             atmNames = [self.data[self.data.get_id(i)]["symbol"] for i in atomsIndexs]
             output += "\n{0}: {1}".format(str(grpID), " ".join(atmNames))
         return output
@@ -48,17 +48,17 @@ class NautyInterface(object):
             
             # append sym group and shift indexes up by 1
             if len(expandedEqGroup) > 1:
-                self.data.symgroups[len(self.data.symgroups)] = map(lambda x:x+1, expandedEqGroup)
+                self.data.equivalenceGroups[len(self.data.equivalenceGroups)] = map(lambda x:x+1, expandedEqGroup)
         
         for atmID, atm in self.data.atoms.items():
             found = False
-            for eqGrpID, eqGrp in self.data.symgroups.items():
+            for eqGrpID, eqGrp in self.data.equivalenceGroups.items():
                 if atm["index"] in eqGrp:
-                    self.data.atoms[atmID]["symGr"] = int(eqGrpID)
+                    self.data.atoms[atmID]["equivalenceGroup"] = int(eqGrpID)
                     found = True
                     break
             if not found:
-                self.data.atoms[atmID]["symGr"] = -1
+                self.data.atoms[atmID]["equivalenceGroup"] = -1
         return
         
 
