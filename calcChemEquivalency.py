@@ -92,8 +92,8 @@ def parseCommandline():
 
 if __name__=="__main__":
     #parseCommandline()
-    #data = MolData(open("testing/pseudoChiral.pdb").read(), open("testing/pseudoChiral.mtb").read())
-    data = MolData(open("testing/butadiene.pdb").read(), open("testing/butadiene.mtb").read())
+    data = MolData(open("testing/pseudoChiral.pdb").read(), open("testing/pseudoChiral.mtb").read())
+    #data = MolData(open("testing/butadiene.pdb").read(), open("testing/butadiene.mtb").read())
     #data = MolData(open("testing/glucose_AA.pdb").read(), open("testing/glucose_AA.dat").read())
     #data = MolData(open("testing/trueChiral.pdb").read(), open("testing/trueChiral.mtb").read())
     #data = MolData(open("testing/1-chloro-1-bromopropane.pdb").read(), open("testing/1-chloro-1-bromopropane.mtb").read())
