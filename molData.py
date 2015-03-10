@@ -1,13 +1,15 @@
 
 
 class MolData(object):
-    atoms      = {}
-    bonds     = []
-    equivalenceGroups = {}
+    
     
     def __init__(self, pdbStr, mtbStr):
+        self.atoms      = {}
+        self.bonds     = []
+        self.equivalenceGroups = {}
         self._readPDB(pdbStr)
         self._readMTB(mtbStr)
+        
     
     def get_id(self,index):
         '''return id of the atom with specified index number'''
