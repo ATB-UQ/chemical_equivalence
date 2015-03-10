@@ -27,7 +27,7 @@ def hasAllDifferentNeighbours(atom, molData):
     neighbours_equivalence_groups_filtered = dict(filter(lambda x:x[1] != -1, neighbours_equivalence_groups.items()))
     
     # check if all atoms are in different equivalence groups
-    return all([count == 1 for _, count in cluster(neighbours_equivalence_groups_filtered).items()])
+    return all([count == 1 for _, count in countValueGroups(neighbours_equivalence_groups_filtered).items()])
     
 
 def has4ConnectingGroups(atom):
@@ -41,7 +41,7 @@ def hasDiastereotopicNeighbours(neighbours_equivalence_groups, log):
     of the two atoms are different (this is an obscure and unlikely case but could occur). 
     '''
     countDiastereotopicGroups = 0
-    for _, occurence in cluster(neighbours_equivalence_groups).items():
+    for _, occurence in countValueGroups(neighbours_equivalence_groups).items():
         # If there are exactly two equivalent neighbours bonded to the 'atm' atom 
         if occurence == MINIMUM_IDENTICAL_NEIGHBOUR_COUNT_FOR_CHIRAL:
             countDiastereotopicGroups += 1
@@ -53,16 +53,18 @@ def hasDiastereotopicNeighbours(neighbours_equivalence_groups, log):
     # This case is incorrectly handled as we don't know whether the chiral atoms are
     # in S or R configuration. To be more accurate we would return true only if the chrality is different
     elif countDiastereotopicGroups == 2:
+        if log: log.warning("KNOWN ISSUES: if there are two groups of diastereotopic atoms then chemical equivalence depends on chiral configuration (R or S)")
         return True
-    
     else:
         return False
 
-def getDiastereotopicAtomIDs(neighbours_equivalence_groups):
-    for equivGrpID, occurence in cluster(neighbours_equivalence_groups).items():
+def getDiastereotopicAtomGroups(neighbours_equivalence_groups):
+    atomGroups = []
+    for equivGrpID, occurence in countValueGroups(neighbours_equivalence_groups).items():
         # If there are exactly two equivalent neighbours bonded to the 'atm' atom 
         if occurence == MINIMUM_IDENTICAL_NEIGHBOUR_COUNT_FOR_CHIRAL:
-            return [atomID for atomID, grpID in neighbours_equivalence_groups.items() if equivGrpID==grpID]
+            atomGroups.append( [atomID for atomID, grpID in neighbours_equivalence_groups.items() if equivGrpID==grpID] )
+    return atomGroups
 
 def containsDiastereotopicAtoms(molData, flavourCounter, log):
     should_rerun = False
@@ -79,25 +81,18 @@ def containsDiastereotopicAtoms(molData, flavourCounter, log):
             # Then these two neighbours are actually diasterotopic and are therefore not chemically equivalent
             # Therefore, they should manually be made non equivalent
             # And the chemical equivalency algorithm should be re-run to avoid atoms further down the graph be considered equivalent
-            atomIDs = getDiastereotopicAtomIDs(neighbours_equivalence_groups) 
-            if log: log.info("FOUND 2 DIASTEROTOPIC ATOMS: {0}".format([molData[a]["symbol"] for a in atomIDs]))
-            for atomID in atomIDs:
-                molData[atomID]["flavour"] = flavourCounter.getNext()
-            should_rerun = True
+            atomGroups = getDiastereotopicAtomGroups(neighbours_equivalence_groups)
+            for atomIDs in atomGroups: 
+                if log: log.info("FOUND 2 DIASTEROTOPIC ATOMS: {0}".format([molData[a]["symbol"] for a in atomIDs]))
+                for atomID in atomIDs:
+                    molData[atomID]["flavour"] = flavourCounter.getNext()
+                should_rerun = True
     return should_rerun
 
 # Counts the occurence of a dictionnary's keys
-def counter(iterable):
+def countValueGroups(dictionary):
     retDict = {}
-    for i in iterable:
-        retDict.setdefault(i, 0)
-        retDict[i] += 1
-    return retDict
-
-# Counts the occurence of a dictionnary's keys
-def cluster(iterable):
-    retDict = {}
-    for value in iterable.values() :
-        retDict.setdefault(value, 0)
-        retDict[value] += 1
+    for v in dictionary.values():
+        retDict.setdefault(v, 0)
+        retDict[v] += 1
     return retDict
