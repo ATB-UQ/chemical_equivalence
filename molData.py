@@ -9,6 +9,7 @@ class MolData(object):
         self.equivalenceGroups = {}
         self._readPDB(pdbStr)
         self._readMTB(mtbStr)
+        self.rings = {}
         
     
     def get_id(self,index):
