@@ -1,0 +1,145 @@
+#----------------------------TITLE -------------------------------------------
+#   Cyclobutadiene
+#
+# This file was generated at 11:37 on 2015-03-11 by
+#
+#                  Automatic Topology Builder  
+#
+#                   REVISION 2015-03-06
+#-----------------------------------------------------------------------------
+# Authors     : Alpeshkumar K. Malde, Le Zuo, Matthew Breeze, Martin Stroet, Alan E. Mark
+#
+# Institute   : Molecular Dynamics group, 
+#               School of Chemistry and Molecular Biosciences (SCMB),
+#               The University of Queensland, QLD 4072, Australia
+# URL         : http://compbio.biosci.uq.edu.au/atb
+# Citation    : Malde AK, Zuo L, Breeze M, Stroet M, Poger D, Nair PC, Oostenbrink C, Mark AE.
+#               An Automated force field Topology Builder (ATB) and repository: version 1.0.
+#               Journal of Chemical Theory and Computation, 2011, 7(12), 4026-4037.
+#               http://pubs.acs.org/doi/abs/10.1021/ct200196m
+#
+# Disclaimer  : 
+#      While every effort has been made to ensure the accuracy and validity of parameters provided below
+#      the assignment of parameters is being based on an automated procedure combining data provided by a
+#      given user as well as calculations performed using third party software. They are provided as a guide.
+#      The authors of the ATB cannot guarantee that the parameters are complete or that the parameters provided
+#      are appropriate for use in any specific application. Users are advised to treat these parameters with discretion
+#      and to perform additional validation tests for their specific application if required. Neither the authors
+#      of the ATB or The University of Queensland except any responsibly for how the parameters may be used.
+#
+# Release notes and warnings: 
+#  (1) The topology is based on a set of atomic coordinates and other data provided by the user after
+#      after quantum mechanical optimization of the structure using different levels of theory depending on
+#      the nature of the molecule.
+#  (2) In some cases the automatic bond, bond angle and dihedral type assignment is ambiguous.
+#      In these cases alternative type codes are provided at the end of the line.
+#  (3) While bonded parameters are taken where possible from the nominated force field non-standard bond, angle and dihedral
+#      type code may be incorporated in cases where an exact match could not be found. These are marked as "non-standard"
+#      or "uncertain" in comments.
+#  (4) In some cases it is not possible to assign an appropriate parameter automatically. "%" is used as a place holder
+#      for those fields that could not be determined automatically. The parameters in these fields must be assigned manually
+#      before the file can be used.
+#-----------------------------------------------------------------------------
+# Input Structure : LE3W
+# Output          : ALL ATOM topology
+#	Use in conjunction with the corresponding all atom PDB file.
+#----------------------------------------------------------------------------
+# Initial Guess Topology Generation: 
+# The topology was guessed from HF/STO-3G level in implicit water optimized geometry
+# and MULLIKEN charges.
+# Bonded and van der Waals parameters were taken from the GROMOS 54A7 parameter set.
+#
+TITLE
+    Topology file generated at 11:03 on 11 Mar 2015 for molecule
+    Cyclobutadiene (IUPAC: (1s,3s)-bicyclo[1.1.0]butane, database identifier: LE3W)
+    by Automatic Topology Builder(revision 2015-03-06).
+END
+FORCEFIELD
+54A7
+END
+PHYSICALCONSTANTS
+# FPEPSI: 1.0/(4.0*PI*EPS0) (EPS0 is the permittivity of vacuum)
+  0.1389354E+03
+# HBAR: Planck's constant HBAR = H/(2* PI)
+  0.6350780E-01
+# SPDL: Speed of light (in nm/ps)
+  2.9979245800E05
+# BOLTZ: Boltzmann's constant
+  8.31441E-03
+END
+LINKEXCLUSIONS
+#nearest neighbour exclusions when linking
+#NRNE
+   2
+END
+MTBUILDBLSOLUTE
+# RNME
+LE3W
+# number of atoms, number of preceding exclusions
+# NMAT, NLIN
+    8    0
+# preceding exclusions
+# ATOM           MAE MSAE
+# atoms
+# The total charge within a charge group is given in the comments.
+# ATOM  ANM IACM MASS  CGM   ICGM  MAE  MSAE                     group charge
+    1   H1   20    1   0.078   0    3    2    3    7
+    2   C2   12   12  -0.184   0    5    3    7    4    5    8
+    3   C3   12   12   0.025   0    4    4    5    6    7
+    4   H4   20    1   0.080   1    1    5                       # -0.001
+    5   C5   12   12  -0.184   0    3    6    7    8
+    6   H6   20    1   0.080   0    1    7
+    7   C7   12   12   0.025   0    1    8
+    8   H8   20    1   0.080   1    0                            #  0.001
+# total charge of the molecule:   0.000
+# residue group charges redistributed:  0.000   0.000
+# bonds
+#  NB
+    8
+# Alternative bond types are placed in comments.
+#  IB   JB   MCB
+    1    2    3 	
+    2    3   26 	
+    2    7   26 	
+    3    4    3 	
+    3    5   15 	
+    5    6    3 	
+    5    7   15 	
+    7    8    3 	
+# bond angles
+# NBA
+   12
+# Alternative angle types are placed in comments.
+#  IB   JB   KB   MCB
+    1    2    3   25 	
+    1    2    7   25 	
+    3    2    7  216 	#  non-standard matched closest 
+    2    3    4   36 	
+    2    3    5    4 	#  matched closest 
+    4    3    5   36 	
+    3    5    6   73 	#  non-standard matched closest 
+    3    5    7  142 	#  non-standard matched closest 
+    6    5    7   73 	#  non-standard matched closest 
+    2    7    5    4 	#  matched closest 
+    2    7    8   36 	
+    5    7    8   36 	
+# improper dihedrals 
+# NIDA
+    2
+#  IB   JB   KB   LB   MCB
+    3    2    4    5    1
+    7    2    5    8    1
+# dihedrals
+# MCBs values have not been optimized. Possible alternatives are in comments.
+# NDA
+    4
+#  IB   JB   KB   LB   MCB
+    7    2    3    5   10    #  15  
+    3    2    7    5   10    #  15  
+    2    3    5    7   10    #  15  
+    3    5    7    2   10    #  15  
+# LJ Exceptions
+# NEX
+    0
+END
+
