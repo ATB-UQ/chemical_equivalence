@@ -93,7 +93,7 @@ def parseCommandline():
 if __name__=="__main__":
     #parseCommandline()
     
-    data = MolData(open("testing/cyclohexane.pdb").read(), open("testing/cyclohexane.mtb").read())
+    data = MolData(open("testing/1,1-dichlorocyclohexane.pdb").read(), open("testing/1,1-dichlorocyclohexane.mtb").read())
     #data = MolData(open("testing/cyclobutadiene.pdb").read(), open("testing/cyclobutadiene.mtb").read())
     #data = MolData(open("testing/(1S,4S)-1,4-dibromo-1,4-dichloro-2,2,3,3-tetramethylbutane.pdb").read(), open("testing/(1S,4S)-1,4-dibromo-1,4-dichloro-2,2,3,3-tetramethylbutane.mtb").read())
     
