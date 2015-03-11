@@ -1,7 +1,7 @@
 from NautyInterface import NautyInterface
 from molData import MolData
 from optparse import OptionParser
-from chiral import containsDiastereotopicAtoms
+from chiral import containsStereoheterotopicAtoms
 from doubleBonds import containsEquivalenceBreakingDoubleBond
 import logging
 symMaxDiff = 0.2 #Maximum absolute charge difference allowed for atoms
@@ -9,7 +9,7 @@ symMaxDiff = 0.2 #Maximum absolute charge difference allowed for atoms
 
 def getChemEquivGroups(molData, log=None):
     # for cases with stereogenic centers we need to add flavour (some additional degree of freedom)
-    # to distinguish diastereotopic atoms
+    # to distinguish stereoheterotopic atoms
     class FlavourCounter(object):
         def __init__(self):
             self._i = 0
@@ -30,7 +30,7 @@ def getChemEquivGroups(molData, log=None):
 
 def chemicalEquivalenceExceptions(molData, flavourCounter, log):
     
-    exceptionSearchingFunctions = [containsDiastereotopicAtoms, containsEquivalenceBreakingDoubleBond]
+    exceptionSearchingFunctions = [containsStereoheterotopicAtoms, containsEquivalenceBreakingDoubleBond]
     
     # If there is a chemical equivalence breaking groups then should_rerun = True
     should_rerun = any([func(molData, flavourCounter, log) for func in exceptionSearchingFunctions])

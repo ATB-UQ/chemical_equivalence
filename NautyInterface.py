@@ -82,7 +82,7 @@ class NautyInterface(object):
         # Accumulate atom indexes
         for atm in self.data.atoms.values():
             if atm.has_key("flavour"):
-                # append flavour to iacm in order to distinguish between diastereotopic atoms,
+                # append flavour to iacm in order to distinguish between stereoheterotopic atoms,
                 # the 1000 is chosen as a large number that is much greater than the 80 existing atom types
                 distinguishingID = 1000+atm["flavour"]
                 atomTypes.setdefault("{0}{1}".format(atm['iacm'], distinguishingID), []).append(atm['index'])

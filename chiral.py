@@ -34,31 +34,31 @@ def has4ConnectingGroups(atom):
     # is possibly steriogenic if atom has at least four neighbours
     return len(atom['conn']) == 4
 
-def hasDiastereotopicNeighbours(neighbours_equivalence_groups, log):
+def hasStereoheterotopicNeighbours(neighbours_equivalence_groups, log):
     '''For molecules that have at least one stereogenic atom, then any neighbour group that has
      two, and only two, chemically equivalent atoms is distereotopic. In the case where two pairs 
-    of neighbours are chemically equivalent, then they are only diastereotopic if the chiral configurations
+    of neighbours are chemically equivalent, then they are only stereoheterotopic if the chiral configurations
     of the two atoms are different (this is an obscure and unlikely case but could occur). 
     '''
-    countDiastereotopicGroups = 0
+    countStereoheterotopicGroups = 0
     for _, occurence in countValueGroups(neighbours_equivalence_groups).items():
         # If there are exactly two equivalent neighbours bonded to the 'atm' atom 
         if occurence == MINIMUM_IDENTICAL_NEIGHBOUR_COUNT_FOR_CHIRAL:
-            countDiastereotopicGroups += 1
+            countStereoheterotopicGroups += 1
     
-    # This is the common case of diasterotopic atoms
-    if countDiastereotopicGroups == 1:
+    # This is the common case of stereoheterotopic atoms
+    if countStereoheterotopicGroups == 1:
         return True
     
     # This case is incorrectly handled as we don't know whether the chiral atoms are
     # in S or R configuration. To be more accurate we would return true only if the chrality is different
-    elif countDiastereotopicGroups == 2:
-        if log: log.warning("KNOWN ISSUES: if there are two groups of diastereotopic atoms then chemical equivalence depends on chiral configuration (R or S)")
+    elif countStereoheterotopicGroups == 2:
+        if log: log.warning("KNOWN ISSUES: if there are two groups of stereoheterotopic atoms then chemical equivalence depends on chiral configuration (R or S)")
         return True
     else:
         return False
 
-def getDiastereotopicAtomGroups(neighbours_equivalence_groups):
+def getStereoheterotopicAtomGroups(neighbours_equivalence_groups):
     atomGroups = []
     for equivGrpID, occurence in countValueGroups(neighbours_equivalence_groups).items():
         # If there are exactly two equivalent neighbours bonded to the 'atm' atom 
@@ -66,24 +66,24 @@ def getDiastereotopicAtomGroups(neighbours_equivalence_groups):
             atomGroups.append( [atomID for atomID, grpID in neighbours_equivalence_groups.items() if equivGrpID==grpID] )
     return atomGroups
 
-def containsDiastereotopicAtoms(molData, flavourCounter, log):
+def containsStereoheterotopicAtoms(molData, flavourCounter, log):
     should_rerun = False
     
     if not hasStereogenicAtom(molData, log): 
         return should_rerun
     
-    if log: log.info("HAS AT LEAST ONE STEREOGENIC ATOM. NOW LOOKING FOR DIASTEREOTOPIC ATOMS.")
+    if log: log.info("HAS AT LEAST ONE STEREOGENIC ATOM. NOW LOOKING FOR STEREOHETEROTOPIC ATOMS.")
     # For every atom 'atm'
     for atom in molData.atoms.values():
         # Get back the equivalence groups of the neighbours
         neighbours_equivalence_groups = getNeighboursEquivalenceGroups(atom, molData)
-        if hasDiastereotopicNeighbours(neighbours_equivalence_groups, log):
-            # Then these two neighbours are actually diasterotopic and are therefore not chemically equivalent
+        if hasStereoheterotopicNeighbours(neighbours_equivalence_groups, log):
+            # Then these two neighbours are actually stereoheterotopic and are therefore not chemically equivalent
             # Therefore, they should manually be made non equivalent
             # And the chemical equivalency algorithm should be re-run to avoid atoms further down the graph be considered equivalent
-            atomGroups = getDiastereotopicAtomGroups(neighbours_equivalence_groups)
+            atomGroups = getStereoheterotopicAtomGroups(neighbours_equivalence_groups)
             for atomIDs in atomGroups: 
-                if log: log.info("FOUND 2 DIASTEROTOPIC ATOMS: {0}".format([molData[a]["symbol"] for a in atomIDs]))
+                if log: log.info("FOUND 2 STEREOHETEROTOPIC ATOMS: {0}".format([molData[a]["symbol"] for a in atomIDs]))
                 for atomID in atomIDs:
                     molData[atomID]["flavour"] = flavourCounter.getNext()
                 should_rerun = True
