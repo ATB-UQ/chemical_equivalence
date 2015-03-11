@@ -3,7 +3,9 @@ from molData import MolData
 from optparse import OptionParser
 from chiral import containsStereoheterotopicAtoms
 from doubleBonds import containsEquivalenceBreakingDoubleBond
+from rings import containsInversableRings
 import logging
+from build_rings import build_rings
 symMaxDiff = 0.2 #Maximum absolute charge difference allowed for atoms
     
 
@@ -30,7 +32,7 @@ def getChemEquivGroups(molData, log=None):
 
 def chemicalEquivalenceExceptions(molData, flavourCounter, log):
     
-    exceptionSearchingFunctions = [containsStereoheterotopicAtoms, containsEquivalenceBreakingDoubleBond]
+    exceptionSearchingFunctions = [containsStereoheterotopicAtoms, containsEquivalenceBreakingDoubleBond, containsInversableRings]
     
     # If there is a chemical equivalence breaking groups then should_rerun = True
     should_rerun = any([func(molData, flavourCounter, log) for func in exceptionSearchingFunctions])
@@ -93,7 +95,8 @@ def parseCommandline():
 if __name__=="__main__":
     #parseCommandline()
     
-    data = MolData(open("testing/1,1-dichlorocyclohexane.pdb").read(), open("testing/1,1-dichlorocyclohexane.mtb").read())
+    #data = MolData(open("testing/cyclohexane.pdb").read(), open("testing/cyclohexane.mtb").read())
+    data = MolData(open("testing/decalin.pdb").read(), open("testing/decalin.mtb").read())
     #data = MolData(open("testing/cyclobutadiene.pdb").read(), open("testing/cyclobutadiene.mtb").read())
     #data = MolData(open("testing/(1S,4S)-1,4-dibromo-1,4-dichloro-2,2,3,3-tetramethylbutane.pdb").read(), open("testing/(1S,4S)-1,4-dibromo-1,4-dichloro-2,2,3,3-tetramethylbutane.mtb").read())
     
@@ -102,6 +105,8 @@ if __name__=="__main__":
     #data = MolData(open("testing/(1R,3S)-1,3-dibromo-1,3-dichloropropane.pdb").read(), open("testing/(1R,3S)-1,3-dibromo-1,3-dichloropropane.mtb").read())
     
     logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - [%(levelname)s] - %(message)s  -->  (%(module)s.%(funcName)s: %(lineno)d)', datefmt='%d-%m-%Y %H:%M:%S')
+    build_rings(data, log=logging.getLogger())
+    print "Rings: {0}".format( data.rings )
     getChemEquivGroups(data, log=logging.getLogger())
     print data.equivalenceGroups.values()
     print "\n".join([str((at["index"], at["equivalenceGroup"])) for at in data.atoms.values()])

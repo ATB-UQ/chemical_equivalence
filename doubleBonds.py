@@ -50,6 +50,11 @@ def areAtomsChemicallyEquivalent(atom1, atom2):
     else:
         return atom1EquivalenceGroup == atom2EquivalenceGroup
 
+def atomsWithIndexes(atoms, indexes):
+    return [ atom for atom in atoms if atom['index'] in indexes ]
+
+def neighbouringAtoms(atom, atoms):
+    return atomsWithIndexes(atoms, atom['conn'])
 
 def getNeighboursExcludingOne(atom, excludedAtom, molData):
     return [ molData.atoms[neighbourID] for neighbourID in atom["conn"] if neighbourID != excludedAtom["index"] ]
