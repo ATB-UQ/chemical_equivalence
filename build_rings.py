@@ -2,7 +2,7 @@ MAX_LOOP_COUNT = 10
 
 def build_rings(molData, log=None):
         '''build the list of rings from connectivity'''
-        log.debug('searching for rings')
+        if log: log.debug('searching for rings')
         possibles = {}          # possible atoms to be in a ring
         #first get atoms with more than 1 connectivities
         for k, i in molData.atoms.items():
@@ -59,7 +59,7 @@ def build_rings(molData, log=None):
             while path: 
                 loopCount -= 1
                 if loopCount < 0:
-                    log.debug('path within build_rings was terminated because max_loop_count was reached')
+                    if log: log.debug('path within build_rings was terminated because max_loop_count was reached')
                     break
                 tmpn = []
                 tmpp = []
@@ -97,5 +97,5 @@ def build_rings(molData, log=None):
         #mark aromatic rings
         [r.__setitem__('aromatic',True) for r in molData.rings.values() \
                 if len(r['atoms']) in [5,6]]
-        log.debug('%d rings found' %len(nodups))
+        if log: log.debug('%d rings found' %len(nodups))
         return True
