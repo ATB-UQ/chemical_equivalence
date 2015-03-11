@@ -3,7 +3,7 @@
 def containsEquivalenceBreakingDoubleBond(molData, flavourCounter, log=None):
     should_rerun = False
     
-    connected_sp2_carbons = connectedSp2Carbons(molData.atoms, log=log)
+    connected_sp2_carbons = connectedSp2Carbons(molData.atoms, log)
     for atom1, atom2 in connected_sp2_carbons:
         # get the neighbouring atoms to atom1 and atom2, excluding eachother
         neighbours = {atom1["index"]: getNeighboursExcludingOne(atom1, atom2, molData),
@@ -16,21 +16,45 @@ def containsEquivalenceBreakingDoubleBond(molData, flavourCounter, log=None):
                                  atom2Neighbours=",".join(map(lambda n:n["symbol"], neighbours[atom2["index"]])),
                                 )
                          )
-        if atom1["equivalenceGroup"] == atom2["equivalenceGroup"] and atom1["equivalenceGroup"] != -1:
-            if log: log.info("Double bond does NOT break chemical equivalence due to symmetry about double bond axis")
-            continue
-        else:
-            if log: log.info("Double bond breaks chemical equivalence")
-            should_rerun = True
-            for neighbour in [n for neighbourList in neighbours.values() for n in neighbourList]:
-                neighbour["flavour"] = flavourCounter.getNext()
-                
+        
+        should_rerun = correctSymmetry(neighbours, flavourCounter, log)
     return should_rerun
+
+def correctSymmetry(neighbours, flavourCounter, log):
+    should_rerun = False
+    neighbourListLeft, neighbourListRight = neighbours.values()
+    
+    # Try matching them two by two
+    if areAtomsChemicallyEquivalent(*neighbourListLeft) and not areAtomsChemicallyEquivalent(*neighbourListRight):
+        if log: log.info("Double bond breaks chemical equivalence: {0}".format(",".join(map(lambda x:x["symbol"], neighbourListLeft))))
+        neighbourListLeft[0]["flavour"] = flavourCounter.getNext()
+        neighbourListLeft[1]["flavour"] = flavourCounter.getNext()
+        should_rerun = True
+    elif areAtomsChemicallyEquivalent(*neighbourListRight) and not areAtomsChemicallyEquivalent(*neighbourListLeft):
+        if log: log.info("Double bond breaks chemical equivalence: {0}".format(",".join(map(lambda x:x["symbol"], neighbourListRight))))
+        neighbourListRight[0]["flavour"] = flavourCounter.getNext()
+        neighbourListRight[1]["flavour"] = flavourCounter.getNext()
+        should_rerun = True
+    # If they belong to the same groups, then they need to be colored
+    # so that no face in more symetric than the other
+        
+    if log and not should_rerun: log.info("Double bond does NOT break chemical equivalence due to symmetry about double bond axis")
+    return should_rerun
+    
+    
+def areAtomsChemicallyEquivalent(atom1, atom2):
+    atom1EquivalenceGroup = atom1["equivalenceGroup"]
+    atom2EquivalenceGroup = atom2["equivalenceGroup"]
+    if any([eqGroup == -1 for eqGroup in [atom1EquivalenceGroup, atom2EquivalenceGroup]]):
+        return False
+    else:
+        return atom1EquivalenceGroup == atom2EquivalenceGroup
+
 
 def getNeighboursExcludingOne(atom, excludedAtom, molData):
     return [ molData.atoms[neighbourID] for neighbourID in atom["conn"] if neighbourID != excludedAtom["index"] ]
 
-def connectedSp2Carbons(atoms, log=None):
+def connectedSp2Carbons(atoms, log):
     connected_sp2_carbons = []
     for atom in atoms.values():
         if isSp2CarbonAtom(atom) and isConnectedToSp2Carbon(atom, atoms):
