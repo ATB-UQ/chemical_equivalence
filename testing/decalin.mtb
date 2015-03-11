@@ -1,0 +1,231 @@
+#----------------------------TITLE -------------------------------------------
+#   trans-decalin
+#
+# This file was generated at 16:22 on 2015-03-11 by
+#
+#                  Automatic Topology Builder  
+#
+#                   REVISION 2015-03-06
+#-----------------------------------------------------------------------------
+# Authors     : Alpeshkumar K. Malde, Le Zuo, Matthew Breeze, Martin Stroet, Alan E. Mark
+#
+# Institute   : Molecular Dynamics group, 
+#               School of Chemistry and Molecular Biosciences (SCMB),
+#               The University of Queensland, QLD 4072, Australia
+# URL         : http://compbio.biosci.uq.edu.au/atb
+# Citation    : Malde AK, Zuo L, Breeze M, Stroet M, Poger D, Nair PC, Oostenbrink C, Mark AE.
+#               An Automated force field Topology Builder (ATB) and repository: version 1.0.
+#               Journal of Chemical Theory and Computation, 2011, 7(12), 4026-4037.
+#               http://pubs.acs.org/doi/abs/10.1021/ct200196m
+#
+# Disclaimer  : 
+#      While every effort has been made to ensure the accuracy and validity of parameters provided below
+#      the assignment of parameters is being based on an automated procedure combining data provided by a
+#      given user as well as calculations performed using third party software. They are provided as a guide.
+#      The authors of the ATB cannot guarantee that the parameters are complete or that the parameters provided
+#      are appropriate for use in any specific application. Users are advised to treat these parameters with discretion
+#      and to perform additional validation tests for their specific application if required. Neither the authors
+#      of the ATB or The University of Queensland except any responsibly for how the parameters may be used.
+#
+# Release notes and warnings: 
+#  (1) The topology is based on a set of atomic coordinates and other data provided by the user after
+#      after quantum mechanical optimization of the structure using different levels of theory depending on
+#      the nature of the molecule.
+#  (2) In some cases the automatic bond, bond angle and dihedral type assignment is ambiguous.
+#      In these cases alternative type codes are provided at the end of the line.
+#  (3) While bonded parameters are taken where possible from the nominated force field non-standard bond, angle and dihedral
+#      type code may be incorporated in cases where an exact match could not be found. These are marked as "non-standard"
+#      or "uncertain" in comments.
+#  (4) In some cases it is not possible to assign an appropriate parameter automatically. "%" is used as a place holder
+#      for those fields that could not be determined automatically. The parameters in these fields must be assigned manually
+#      before the file can be used.
+#-----------------------------------------------------------------------------
+# Input Structure : D1QJ
+# Output          : ALL ATOM topology
+# Use in conjunction with the corresponding all atom PDB file.
+#----------------------------------------------------------------------------
+# Initial Guess Topology Generation: 
+# The topology was generated from AM1 optimized geometry and MOPAC charges.
+# Bonded and van der Waals parameters were taken from the GROMOS 53A6 parameter set.
+#
+TITLE
+    Topology file generated at 16:03 on 11 Mar 2015 for molecule
+    trans-decalin (IUPAC: (4ar,8ar)-decahydronaphthalene, database identifier: D1QJ)
+    by Automatic Topology Builder(revision 2015-03-06).
+END
+FORCEFIELD
+53A6
+END
+TOPPHYSCON
+# FPEPSI: 1.0/(4.0*PI*EPS0) (EPS0 is the permittivity of vacuum)
+   0.1389354E+03
+# HBAR: Planck's constant HBAR = H/(2* PI)
+   0.6350780E-01
+END
+LINKEXCLUSIONS
+#nearest neighbour exclusions when linking
+#NRNE
+   2
+END
+MTBUILDBLSOLUTE
+# RNME
+D1QJ
+# number of atoms, number of preceding exclusions
+# NMAT, NLIN
+   28    0
+# preceding exclusions
+# ATOM           MAE MSAE
+# atoms
+# The total charge within a charge group is given in the comments.
+# ATOM  ANM IACM MASS  CGM   ICGM  MAE  MSAE                                         group charge
+    1  H12   20    1   0.078   0    4    2    3    4    7
+    2   C1   12   12  -0.161   0    9    3    4    7    5    6    8    9   10   26
+    3  H11   20    1   0.078   0    2    4    7
+    4   C2   12   12  -0.155   0    7    5    6   26    7   24   27   28
+    5  H13   20    1   0.078   0    2    6   26
+    6  H14   20    1   0.078   1    1   26                                           # -0.004
+    7  C10   12   12  -0.152   0    6    8    9   10   11   12   24
+    8  H27   20    1   0.079   0    2    9   10
+    9  H28   20    1   0.079   0    1   10
+   10   C9   12   12  -0.099   0    9   11   12   24   13   14   15   21   25   26
+   11  H26   20    1   0.088   0    2   12   24
+   12   C8   12   12  -0.152   0    7   13   14   15   16   17   18   24
+   13  H24   20    1   0.079   0    2   14   15
+   14  H25   20    1   0.079   1    1   15                                           #  0.001
+   15   C7   12   12  -0.155   0    6   16   17   18   19   20   21
+   16  H22   20    1   0.078   0    2   17   18
+   17  H23   20    1   0.078   0    1   18
+   18   C6   12   12  -0.155   0    6   19   20   21   22   23   24
+   19  H20   20    1   0.078   0    2   20   21
+   20  H21   20    1   0.078   1    1   21                                           #  0.002
+   21   C5   12   12  -0.152   0    5   22   23   24   25   26
+   22  H18   20    1   0.079   0    2   23   24
+   23  H19   20    1   0.079   0    1   24
+   24   C4   12   12  -0.099   0    4   25   26   27   28
+   25  H17   20    1   0.088   0    1   26
+   26   C3   12   12  -0.152   0    2   27   28
+   27  H15   20    1   0.079   0    1   28
+   28  H16   20    1   0.079   1    0                                                #  0.001
+# total charge of the molecule:  -0.000
+# residue group charges redistributed:  0.000   0.000   0.000   0.000
+# bonds
+#  NB
+   29
+# Alternative bond types are placed in comments.
+#  IB   JB   MCB
+    1    2   39   
+    2    3   39   
+    2    4   26   
+    2    7   26   
+    4    5   39   
+    4    6   39   
+    4   26   26   
+    7    8   39   
+    7    9   39   
+    7   10   26   
+   10   11   39   
+   10   12   26   
+   10   24   27   
+   12   13   39   
+   12   14   39   
+   12   15   26   
+   15   16   39   
+   15   17   39   
+   15   18   26   
+   18   19   39   
+   18   20   39   
+   18   21   26   
+   21   22   39   
+   21   23   39   
+   21   24   26   
+   24   25   39   
+   24   26   26   
+   26   27   39   
+   26   28   39   
+# bond angles
+# NBA
+   60
+# Alternative angle types are placed in comments.
+#  IB   JB   KB   MCB
+    1    2    3   43  #  matched closest 
+    1    2    4    8  #  matched closest 
+    1    2    7    8  #  matched closest 
+    3    2    4   14  #  matched closest 
+    3    2    7    8  #  matched closest 
+    4    2    7   15  
+    2    4    5   14  #  matched closest 
+    2    4    6    8  #  matched closest 
+    2    4   26   15  
+    5    4    6   43  #  matched closest 
+    5    4   26    8  #  matched closest 
+    6    4   26    8  #  matched closest 
+    2    7    8   14  #  matched closest 
+    2    7    9   14  #  matched closest 
+    2    7   10   15  
+    8    7    9   43  #  matched closest 
+    8    7   10    8  #  matched closest 
+    9    7   10    8  #  matched closest 
+    7   10   11   47  #  matched closest 
+    7   10   12   15  
+    7   10   24   15  
+   11   10   12   47  #  matched closest 
+   11   10   24    7  #  matched closest 
+   12   10   24   15  
+   10   12   13    8  #  matched closest 
+   10   12   14    8  #  matched closest 
+   10   12   15   15  
+   13   12   14   43  #  matched closest 
+   13   12   15   14  #  matched closest 
+   14   12   15   14  #  matched closest 
+   12   15   16    8  #  matched closest 
+   12   15   17    8  #  matched closest 
+   12   15   18   15  
+   16   15   17   43  #  matched closest 
+   16   15   18    8  #  matched closest 
+   17   15   18   14  #  matched closest 
+   15   18   19   14  #  matched closest 
+   15   18   20    8  #  matched closest 
+   15   18   21   15  
+   19   18   20   43  #  matched closest 
+   19   18   21    8  #  matched closest 
+   20   18   21    8  #  matched closest 
+   18   21   22   14  #  matched closest 
+   18   21   23   14  #  matched closest 
+   18   21   24   15  
+   22   21   23   43  #  matched closest 
+   22   21   24    8  #  matched closest 
+   23   21   24    8  #  matched closest 
+   10   24   21   15  
+   10   24   25    7  #  matched closest 
+   10   24   26   15  
+   21   24   25   47  #  matched closest 
+   21   24   26   15  
+   25   24   26   47  #  matched closest 
+    4   26   24   15  
+    4   26   27   14  #  matched closest 
+    4   26   28   14  #  matched closest 
+   24   26   27    8  #  matched closest 
+   24   26   28    8  #  matched closest 
+   27   26   28   43  #  matched closest 
+# improper dihedrals 
+# NIDA
+    0
+#  IB   JB   KB   LB   MCB
+# dihedrals
+# MCBs values have not been optimized. Possible alternatives are in comments.
+# NDA
+   11
+#  IB   JB   KB   LB   MCB
+    7    2    4   26   34    
+    4    2    7   10   34    
+    2    4   26   24   34    
+    2    7   10   24   34    
+   24   10   12   15   34    
+   12   10   24   26   34    
+   10   12   15   18   34    
+   12   15   18   21   34    
+   15   18   21   24   34    
+   18   21   24   26   34    
+   21   24   26    4   34    
+END
+
