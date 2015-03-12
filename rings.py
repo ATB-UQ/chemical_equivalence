@@ -21,16 +21,19 @@ def containsInversableRings(molData, flavourCounter, log=None):
             #print "Symmetric nodes: {0}".format(symmetric_nodes)
             for symmetric_node in symmetric_nodes:
                 substituents = getCarbonSubstituents(symmetric_node, all_atoms, ring_atoms)
-                substituents[0]['flavour'] = flavourCounter.getNext()
-                substituents[1]['flavour'] = flavourCounter.getNext()
-                if log: log.info("    Removed chemical equivalency between {0} and {1} (axial and equatorial substituents on inversable ring)".format(*map(lambda x:x['symbol'], substituents)))
-                should_rerun = True
+                if len(substituents) == 2 :
+                    substituents[0]['flavour'] = flavourCounter.getNext()
+                    substituents[1]['flavour'] = flavourCounter.getNext()
+                    if log: log.info("    Removed chemical equivalency between {0} and {1} (axial and equatorial substituents on inversable ring)".format(*map(lambda x:x['symbol'], substituents)))
+                    should_rerun = True
+                else :
+                    if log: log.info("    There were no axial and equatorial substituent, as there were only {0} of them.".format(len(substituents)))
         else:
             if log: log.info('    Ring did not contain any asymmetrically-substituted nodes that will break the axial-equatorial symmetry')
     return should_rerun
 
 def is_inversable_ring(ring_atoms, log):
-    return len(ring_atoms) in [5,6]
+    return len(ring_atoms) in [5,6,7,8]
 
 def getCarbonSubstituents(node, atoms, ring_atoms):
     neighbours = neighbouringAtoms(node, atoms)
