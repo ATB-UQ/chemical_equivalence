@@ -1,4 +1,4 @@
-MAX_LOOP_COUNT = 10
+MAX_LOOP_COUNT = 8
 
 def build_rings(molData, log=None):
         '''build the list of rings from connectivity'''
