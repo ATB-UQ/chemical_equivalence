@@ -1,8 +1,5 @@
-from doubleBonds import areAtomsChemicallyEquivalent, atomsWithIndexes, neighbouringAtoms
+from doubleBonds import areAtomsChemicallyEquivalent, atomsWithIndexes, neighbouringAtoms, atomNames
 from build_rings import build_rings
-
-def atomNames(atom_list):
-    return ', '.join(map(lambda x: x['symbol'], atom_list))
 
 def containsInversableRings(molData, flavourCounter, log=None):
     should_rerun = False

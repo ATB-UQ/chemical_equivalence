@@ -50,6 +50,9 @@ def areAtomsChemicallyEquivalent(atom1, atom2):
     else:
         return atom1EquivalenceGroup == atom2EquivalenceGroup
 
+def atomNames(atom_list):
+    return ', '.join(map(lambda x: x['symbol'], atom_list))
+
 def atomsWithIndexes(atoms, indexes):
     return [ atom for atom in atoms if atom['index'] in indexes ]
 
