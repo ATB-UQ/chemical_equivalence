@@ -5,11 +5,12 @@ def containsEquivalenceBreakingDoubleBond(molData, flavourCounter, log=None):
     
     connected_sp2_carbons = connectedSp2Carbons(molData.atoms, log)
     for atom1, atom2 in connected_sp2_carbons:
+        if log: log.info('Found double bond that could disturb chemical equivalency: {0}'.format(atomNames([atom1, atom2])))
         # get the neighbouring atoms to atom1 and atom2, excluding eachother
         neighbours = {atom1["index"]: getNeighboursExcludingOne(atom1, atom2, molData),
                       atom2["index"]: getNeighboursExcludingOne(atom2, atom1, molData)}
 
-        if log: log.info("Double bond neighbourhood: ({atom1Neighbours})--{atom1}={atom2}--({atom2Neighbours})"\
+        if log: log.info("    Double bond neighbourhood: ({atom1Neighbours})--{atom1}={atom2}--({atom2Neighbours})"\
                          .format(atom1=atom1["symbol"], 
                                  atom2=atom2["symbol"],
                                  atom1Neighbours=",".join(map(lambda n:n["symbol"], neighbours[atom1["index"]])),
@@ -26,19 +27,23 @@ def correctSymmetry(neighbours, flavourCounter, log):
     
     # Try matching them two by two
     if areAtomsChemicallyEquivalent(*neighbourListLeft) and not areAtomsChemicallyEquivalent(*neighbourListRight):
-        if log: log.info("Double bond breaks chemical equivalence: {0}".format(",".join(map(lambda x:x["symbol"], neighbourListLeft))))
+        if log:
+            log.info('    Found asymmetric substituents on one side of the double bond that will break the symmetry of the other side: {0}'.format( atomNames(neighbourListRight)))
+            log.info("    Removed chemical equivalence between {0} and {1} (other side of the double bond)".format( *map(lambda x:x["symbol"], neighbourListLeft)) )
         neighbourListLeft[0]["flavour"] = flavourCounter.getNext()
         neighbourListLeft[1]["flavour"] = flavourCounter.getNext()
         should_rerun = True
     elif areAtomsChemicallyEquivalent(*neighbourListRight) and not areAtomsChemicallyEquivalent(*neighbourListLeft):
-        if log: log.info("Double bond breaks chemical equivalence: {0}".format(",".join(map(lambda x:x["symbol"], neighbourListRight))))
+        if log:
+            log.info('    Found asymmetric substituents on one side of the double bond that will break the symmetry of the other side: {0}'.format( atomNames(neighbourListRight)))
+            log.info("    Removed chemical equivalence between {0} and {1} (other side of the double bond)".format( *map(lambda x:x["symbol"], neighbourListLeft)) )
         neighbourListRight[0]["flavour"] = flavourCounter.getNext()
         neighbourListRight[1]["flavour"] = flavourCounter.getNext()
         should_rerun = True
     # If they belong to the same groups, then they need to be colored
     # so that no face in more symetric than the other
         
-    if log and not should_rerun: log.info("Double bond does NOT break chemical equivalence due to symmetry about double bond axis")
+    if log and not should_rerun: log.info("    Double bond does NOT break chemical equivalence due to symmetry about double bond axis")
     return should_rerun
     
     
