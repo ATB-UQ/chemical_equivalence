@@ -1,6 +1,7 @@
 import unittest
 from molData import MolData
 import calcChemEquivalency
+import build_rings
 import logging
 
 class ChemicalEquivalencyTest(unittest.TestCase):
@@ -9,6 +10,7 @@ class ChemicalEquivalencyTest(unittest.TestCase):
         data = MolData(open("testing/{base_file}.pdb".format(base_file=base_file)).read(), open("testing/{base_file}.mtb".format(base_file=base_file)).read())
         #logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - [%(levelname)s] - %(message)s  -->  (%(module)s.%(funcName)s: %(lineno)d)', datefmt='%d-%m-%Y %H:%M:%S')
         #calcChemEquivalency.getChemEquivGroups(data, log=logging.getLogger())
+        build_rings.build_rings(data)
         calcChemEquivalency.getChemEquivGroups(data)
         result_set = set(map(frozenset, data.equivalenceGroups.values()))
         expectedResultSet = set(map(frozenset, expected_result_list))
@@ -55,7 +57,9 @@ class ChemicalEquivalencyTest(unittest.TestCase):
             
     def testDichlorocyclohexane(self):
         self.run_unit_check("1,1-dichlorocyclohexane", [[1, 3], [4, 7], [5, 6, 8, 9], [10, 16], [11, 12, 17, 18], [14, 15]])    
-        
+
+    def testDecalin(self):
+        self.run_unit_check("decalin", [])
     
 suite = unittest.TestLoader().loadTestsFromTestCase(ChemicalEquivalencyTest)
 unittest.TextTestRunner(verbosity=4).run(suite)
