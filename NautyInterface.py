@@ -10,7 +10,7 @@ class NautyInterface(object):
         if log: log.debug("Running Nauty")
         nautyInput = self._writeNautyInput()
         
-        args = ["dreadnaut"]
+        args = ["/usr/local/bin/dreadnaut"]
         nautyStdout = _run(args, nautyInput, errorLog=log)
         
         if len(nautyStdout) == 0:
