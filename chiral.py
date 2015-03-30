@@ -13,7 +13,7 @@ def hasStereogenicAtom(molData, log):
     for atom in molData.atoms.values():
         if isSterogenicAtom(atom, molData):
             hasCenter = True
-            if log: log.info("Stereogenic atom: {0}".format(atom["symbol"]))
+            if log: log.debug("Stereogenic atom: {0}".format(atom["symbol"]))
     return hasCenter
 
 def isSterogenicAtom(atom, molData):
@@ -72,7 +72,7 @@ def containsStereoheterotopicAtoms(molData, flavourCounter, log):
     if not hasStereogenicAtom(molData, log): 
         return should_rerun
     
-    if log: log.info("HAS AT LEAST ONE STEREOGENIC ATOM. NOW LOOKING FOR STEREOHETEROTOPIC ATOMS.")
+    if log: log.debug("HAS AT LEAST ONE STEREOGENIC ATOM. NOW LOOKING FOR STEREOHETEROTOPIC ATOMS.")
     # For every atom 'atm'
     for atom in molData.atoms.values():
         # Get back the equivalence groups of the neighbours
@@ -83,7 +83,7 @@ def containsStereoheterotopicAtoms(molData, flavourCounter, log):
             # And the chemical equivalency algorithm should be re-run to avoid atoms further down the graph be considered equivalent
             atomGroups = getStereoheterotopicAtomGroups(neighbours_equivalence_groups)
             for atomIDs in atomGroups: 
-                if log: log.info("FOUND 2 STEREOHETEROTOPIC ATOMS: {0}".format([molData[a]["symbol"] for a in atomIDs]))
+                if log: log.debug("FOUND 2 STEREOHETEROTOPIC ATOMS: {0}".format([molData[a]["symbol"] for a in atomIDs]))
                 for atomID in atomIDs:
                     molData[atomID]["flavour"] = flavourCounter.getNext()
                 should_rerun = True

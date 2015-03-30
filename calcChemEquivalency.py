@@ -38,8 +38,8 @@ def chemicalEquivalenceExceptions(molData, flavourCounter, log):
     should_rerun = any([func(molData, flavourCounter, log) for func in exceptionSearchingFunctions])
     
     if log:
-        if should_rerun: log.info("Molecule contains chemical equivalence breaking groups.")
-        else:            log.info("Molecule has NO chemical equivalence breaking groups.")
+        if should_rerun: log.debug("Molecule contains chemical equivalence breaking groups.")
+        else:            log.debug("Molecule has NO chemical equivalence breaking groups.")
         
     return should_rerun
 
@@ -94,7 +94,8 @@ def parseCommandline():
 
 if __name__=="__main__":
     #parseCommandline()
-    
+    #data = MolData(open("testing/stressTest.pdb").read(), open("testing/stressTest.mtb").read())
+    #data = MolData(open("testing/benzene.pdb").read(), open("testing/benzene.mtb").read())
     #data = MolData(open("testing/cyclohexane.pdb").read(), open("testing/cyclohexane.mtb").read())
     data = MolData(open("testing/decalin.pdb").read(), open("testing/decalin.mtb").read())
     #data = MolData(open("testing/1,1-dichlorocyclohexane.pdb").read(), open("testing/1,1-dichlorocyclohexane.mtb").read())

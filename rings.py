@@ -1,5 +1,4 @@
 from doubleBonds import areAtomsChemicallyEquivalent, atomsWithIndexes, neighbouringAtoms, atomNames
-from build_rings import build_rings
 
 def containsInversableRings(molData, flavourCounter, log=None):
     should_rerun = False
@@ -10,9 +9,9 @@ def containsInversableRings(molData, flavourCounter, log=None):
         
         if not is_inversable_ring(ring_atoms,log) :
             continue
-        if log: log.info('Found inversable ring that could disturb chemical equivalency: {0}'.format(atomNames(ring_atoms)))
+        if log: log.debug('Found inversable ring that could disturb chemical equivalency: {0}'.format(atomNames(ring_atoms)))
         if any([ hasDifferentSubstituent(node, all_atoms, ring_atoms) for node in ring_atoms]):
-            if log: log.info('    Found asymmetrically-substituted atom(s) in the nodes of the ring that will break the axial/equatorial symmetry: {0}'.format( atomNames([ node for node in ring_atoms if hasDifferentSubstituent(node, all_atoms, ring_atoms)] ) ) )
+            if log: log.debug('    Found asymmetrically-substituted atom(s) in the nodes of the ring that will break the axial/equatorial symmetry: {0}'.format( atomNames([ node for node in ring_atoms if hasDifferentSubstituent(node, all_atoms, ring_atoms)] ) ) )
             # Then break the axial/equatorial symmetry for everyone which has some
             symmetric_nodes = filter(lambda x: not hasDifferentSubstituent(x, all_atoms, ring_atoms) , ring_atoms)
             #print "Symmetric nodes: {0}".format(symmetric_nodes)
@@ -21,12 +20,12 @@ def containsInversableRings(molData, flavourCounter, log=None):
                 if len(substituents) == 2 :
                     substituents[0]['flavour'] = flavourCounter.getNext()
                     substituents[1]['flavour'] = flavourCounter.getNext()
-                    if log: log.info("    Removed chemical equivalency between {0} and {1} (axial and equatorial substituents on inversable ring)".format(*map(lambda x:x['symbol'], substituents)))
+                    if log: log.debug("    Removed chemical equivalency between {0} and {1} (axial and equatorial substituents on inversable ring)".format(*map(lambda x:x['symbol'], substituents)))
                     should_rerun = True
                 else :
-                    if log: log.info("    There were no axial and equatorial substituent, as there were only {0} of them.".format(len(substituents)))
+                    if log: log.debug("    There were no axial and equatorial substituent, as there were only {0} of them.".format(len(substituents)))
         else:
-            if log: log.info('    Ring did not contain any asymmetrically-substituted nodes that will break the axial-equatorial symmetry')
+            if log: log.debug('    Ring did not contain any asymmetrically-substituted nodes that will break the axial-equatorial symmetry')
     return should_rerun
 
 def is_inversable_ring(ring_atoms, log):

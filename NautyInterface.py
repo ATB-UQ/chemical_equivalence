@@ -7,7 +7,7 @@ class NautyInterface(object):
         self.data = molData
     
     def calcEquivGroups(self, log=None):
-        if log: log.info("Running Nauty")
+        if log: log.debug("Running Nauty")
         nautyInput = self._writeNautyInput()
         
         args = ["dreadnaut"]
@@ -19,7 +19,8 @@ class NautyInterface(object):
             return ""
         self._procNautyOutput(nautyStdout)
         
-        if log: log.info("Equivalence groups: {0}".format(self._getLogInfo()))
+        if log: 
+            log.debug("Equivalence groups: {0}".format(self._getLogInfo()))
     
     def _getLogInfo(self):
         output = ""
