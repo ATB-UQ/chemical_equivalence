@@ -1,3 +1,5 @@
+import math
+from config import DOUBLE_BOND_LENGTH_CUTOFF
 
 
 def containsEquivalenceBreakingDoubleBond(molData, flavourCounter, log=None):
@@ -70,8 +72,11 @@ def getNeighboursExcludingOne(atom, excludedAtom, molData):
 def connectedSp2Carbons(atoms, log):
     connected_sp2_carbons = []
     for atom in atoms.values():
-        if isSp2CarbonAtom(atom) and isConnectedToSp2Carbon(atom, atoms):
-            doubleBondPair = (atom, getConnectedSp2Carbon(atom, atoms))
+        if isSp2CarbonAtom(atom) and isConnectedToSp2Carbon(atom, atoms) and hasSuitableBondLength(atom, atoms):
+            atom2 = getConnectedSp2Carbon(atom, atoms)
+            if not atom2:
+                continue
+            doubleBondPair = (atom, atom2)
             if not alreadyAdded(doubleBondPair, connected_sp2_carbons):
                 connected_sp2_carbons.append( doubleBondPair )
     if log:
@@ -80,8 +85,7 @@ def connectedSp2Carbons(atoms, log):
     return connected_sp2_carbons
 
 def alreadyAdded(doubleBondPair, connected_sp2_carbons):
-    flattered_connected_carbons = [a for ccPair in connected_sp2_carbons for a in ccPair]
-    return any([atom in flattered_connected_carbons for atom in doubleBondPair])
+    return doubleBondPair in connected_sp2_carbons or doubleBondPair[::-1] in connected_sp2_carbons  
 
 def areNeighbours(atom1, atom2):
     return any([True for index in atom1['conn'] if atom2["index"]==index ])
@@ -93,7 +97,7 @@ def isConnectedToSp2Carbon(atom, atoms):
         
 def getConnectedSp2Carbon(atom, atoms):
     for neighbourAtomID in atom["conn"]:
-        if isSp2CarbonAtom(atoms[neighbourAtomID]):
+        if isSp2CarbonAtom(atoms[neighbourAtomID]) and suitableBondLength(atom, atoms[neighbourAtomID]):
             return atoms[neighbourAtomID]
 
 def isSp2CarbonAtom(atom):
@@ -105,3 +109,15 @@ def isCarbon(atom):
 def has3Neighbours(atom):
     return len(atom["conn"]) == 3
     
+def hasSuitableBondLength(atom1, atoms):
+    for atom2 in atoms.values():
+        if suitableBondLength(atom1, atom2):
+            return True
+
+def suitableBondLength(atom1, atom2):
+    coord_key = "ocoord" if "ocoord" in atom1 else "coord"
+    if _dist(atom1[coord_key], atom2[coord_key]) < DOUBLE_BOND_LENGTH_CUTOFF:
+        return True
+    
+def _dist(p1, p2):
+    return math.sqrt((p1[0]-p2[0])**2 + (p1[1]-p2[1])**2 + (p1[2]-p2[2])**2 )

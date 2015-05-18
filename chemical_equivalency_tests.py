@@ -31,7 +31,6 @@ class ChemicalEquivalencyTest(unittest.TestCase):
     
     def testButadiene(self):
         self.run_unit_check("butadiene", [[1, 3], [9, 10], [2, 8], [4, 6], [5, 7]])
-        
 
     def testBenzene(self):
         self.run_unit_check("benzene", [[1, 4, 6, 8, 10, 12], [2, 3, 5, 7, 9, 11]])
