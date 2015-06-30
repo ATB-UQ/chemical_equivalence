@@ -45,6 +45,11 @@ def clearEqGroupData(molData):
     for atom in molData.atoms.values():
         del atom["equivalenceGroup"]
 
+def partial_mol_data(pdb_string):
+    data = MolData(pdb_string)
+    getChemEquivGroups(data)
+    return data
+
 def parseCommandline():
     # run CGP and symmetrization from commandline arguments
 

@@ -2,7 +2,7 @@ from build_rings import build_rings
 
 class MolData(object):
 
-    def __init__(self, pdbStr, log):
+    def __init__(self, pdbStr, log=None):
         self.atoms      = {}
         self.bonds     = []
         self.equivalenceGroups = {}

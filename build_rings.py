@@ -9,7 +9,7 @@ ACCEPTED_PLANAR_VALENCE_PER_ATOM_TYPE = {
     }
 PLANAR_DISTANCE_TOL = 0.025
 
-def build_rings(data, log):
+def build_rings(data, log=None):
 
     def _is_ring_in_all_rings(ring, all_rings):
         for existing_ring in all_rings.values():
@@ -59,8 +59,10 @@ def has_ring_planar_valences(data, ring, log):
                 if not len(atom['conn']) in accepted_valences: has_aromatic_valences = False
                 break
         if not has_aromatic_valences: break
-    if has_aromatic_valences: log.debug("{0} has the valences expected for a planar ring and will be treated as such".format(map(lambda x:data[x]["symbol"], ring['atoms'])))
-    else: log.debug("{0} DOES NOT have the valences expected for a planar ring and will not be treated as such".format(map(lambda x:data[x]["symbol"], ring['atoms'])))
+    if has_aromatic_valences:
+        if log: log.debug("{0} has the valences expected for a planar ring and will be treated as such".format(map(lambda x:data[x]["symbol"], ring['atoms'])))
+    else:
+        if log: log.debug("{0} DOES NOT have the valences expected for a planar ring and will not be treated as such".format(map(lambda x:data[x]["symbol"], ring['atoms'])))
     return has_aromatic_valences
 
 def _serialize_weighted_graph(G, indent="", output=[]):
@@ -89,7 +91,7 @@ def is_ring_planar(data, ring, log):
         max_distance = max(abs(distance), max_distance)
         if abs(distance) > PLANAR_DISTANCE_TOL:
             return False
-    log.debug("Maximum distance to plane is {0:.3f}nm ({1})".format(max_distance,
+    if log: log.debug("Maximum distance to plane is {0:.3f}nm ({1})".format(max_distance,
                                                                          map(lambda x:data[x]["symbol"], ring["atoms"]),
                                                                          )
                          )
