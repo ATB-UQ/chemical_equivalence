@@ -1,101 +1,142 @@
-MAX_LOOP_COUNT = 8
+from copy import deepcopy
+from math import sqrt
+from utilities.dijkstra import shortestPath
+ACCEPTED_PLANAR_VALENCE_PER_ATOM_TYPE = { 
+    'C': [3],
+    'N': [2, 3], # For pyridine
+    'O': [2],
+    'S': [2],
+    }
+PLANAR_DISTANCE_TOL = 0.025
 
-def build_rings(molData, log=None):
-        '''build the list of rings from connectivity'''
-        if log: log.debug('searching for rings')
-        possibles = {}          # possible atoms to be in a ring
-        #first get atoms with more than 1 connectivities
-        for k, i in molData.atoms.items():
-            if len(i['conn']) > 1:
-                possibles[k] = i['conn'][:]
-        #remove all the ones that cannot be in a ring
-        while possibles:
-            #do until the possible ring atoms' atomid list matches their ring
-            #neighbor list
-            if sorted(possibles.keys()) == \
-                    sorted(list(set(reduce(lambda x,y:x+y, possibles.values())))):
+def build_rings(data, log):
+
+    def _is_ring_in_all_rings(ring, all_rings):
+        for existing_ring in all_rings.values():
+            if frozenset(existing_ring["atoms"]) == frozenset(ring):
+                return True
+        return False
+
+    all_rings = {}
+    ring_count = 1
+    mol_graph = _get_graph_dict(data.atoms)
+
+    #serialized_graph = []
+    #_serialize_weighted_graph(mol_graph,output=serialized_graph)
+    #log.debug("connectivity_graph:\n" + "\n".join(serialized_graph))
+
+    for bond in data.bonds:
+        rings = _get_all_rings_for_bond(deepcopy(mol_graph), bond["atoms"])
+        for ring in rings:
+            if len(ring)==2: continue
+            ring = map(int, ring)
+            if not _is_ring_in_all_rings(ring, all_rings):
+                ring_dict = {"atoms": ring, "aromatic": False}
+                ring_dict["aromatic"] = is_ring_aromatic(data, ring_dict, log)
+                all_rings[ring_count] = ring_dict
+                ring_count += 1
+    return all_rings
+
+def is_ring_aromatic(data, ring, log):
+    return has_ring_planar_geometry(data, ring, log) and has_ring_planar_valences(data, ring, log)
+
+def has_ring_planar_geometry(data, ring, log):
+
+    if len(ring["atoms"]) < 4:
+        return False
+
+    # Get dihedral atoms
+    return is_ring_planar(data, ring, log)
+
+def has_ring_planar_valences(data, ring, log):
+    ''' Prevents rings with unual valences to be assigned as planar'''
+
+    ring_atoms = [ data.atoms[index] for index in ring['atoms'] ]
+    has_aromatic_valences = True
+    for atom in ring_atoms:
+        for atom_type, accepted_valences in ACCEPTED_PLANAR_VALENCE_PER_ATOM_TYPE.items():
+            if atom['type'].upper() == atom_type:
+                if not len(atom['conn']) in accepted_valences: has_aromatic_valences = False
                 break
-            for k, i in possibles.items():
-                #remove possible ring atoms' neighbours not in the ring atoms' list
-                [i.remove(a) for a in i[:] if a not in possibles.keys()]
-                #if the atom has < 2 neighbors on the ring, it is not a ring atom
-                if len(i) <2:       possibles.pop(k)
-        #search for rings
-        #   suppose possible ring atoms, as listed in possibles.keys(), are
-        #   [1,2,3,4,5]; their ring neighbors, as stored in possibles.items(), are
-        #   [2,3,4],[1,4,5],...., the ring searching algorithm goes like this:
-        #       1. set PATH to be [[1],], set NEXT to be atom [2,3,4]. Here PATH is
-        #          the list of paths to be completed, and NEXT is the list of next
-        #          possible atoms to be added to the paths.
-        #       2. for each atom in NEXT, check if it connects to the end atom of
-        #          any of the path.  If yes, that atom could be added to the path. The
-        #          following cases may happen: 
-        #             a.)  that atom is not in the path: it is added to the end of
-        #                  the path, and its corresponding ring neighbors are added
-        #                  to TMPNEXT
-        #             b.)  that atom is in the list and it is the same as the last
-        #                  but one atom: we are going back the last bond, which is not
-        #                  what we want, ignore this.
-        #             c.)  that atom is in the list and not the same as the last but
-        #                  one atom: a loop is found, store the path(including the
-        #                  last added atom) to a list, say, named RING
-        #       3. when the loop has gone over all atoms in NEXT, set NEXT to be
-        #          TMPNEXT, and continue with step 2 until all paths in PATH are
-        #          terminated.
-        #       4. Now we have a list named RING of paths with a loop in each. The
-        #          following procedures are taken to get the rings:
-        #             a.)  Chop out the cyclic fragment. For example, if path is
-        #                  [1,2,3,4,5,6,7,2], get atoms from 2 to 7.
-        #             b.)  There must be a lot of duplications, remove all the
-        #                  duplicated rings which may start from different atoms and
-        #                  go in reversed order.
-        
-        rings = []
-        for k in possibles.keys():
-            nextA = possibles[k]
-            path = [[k]]
-            # Martin Stroet 26-02-2011: Added a maximum loop count to avoid infinite loop - sessions 2010 and 1983 1984
-            loopCount = MAX_LOOP_COUNT
-            while path: 
-                loopCount -= 1
-                if loopCount < 0:
-                    if log: log.debug('path within build_rings was terminated because max_loop_count was reached')
-                    break
-                tmpn = []
-                tmpp = []
-                for i in nextA:
-                    for p in path:
-                        #not connected to this path
-                        if i not in possibles[p[-1]]:        continue
-                        #a second time in the path, already a loop, terminate
-                        if i in p:
-                            #not the last bond
-                            if i != p[-2]:
-                                path.remove(p)
-                                r = p[p.index(i):]
-                                if r not in rings:      rings.append(r)
-                            else:
-                                #do not go back the same bond
-                                continue
-                        #continue to extend the path
-                        else:
-                            tmpp.append(p + [i])
-                            tmpn.extend(possibles[i])
-                #set new nextA list and new path
-                nextA = list(set(tmpn))
-                path = tmpp
-        nodups = []
-        [nodups.append(r) for r in rings if sorted(r) not in \
-                [sorted(i) for i in nodups]]
-        for i in range(len(nodups)):
-            molData.rings[i+1] = {'atoms':nodups[i] }
-            for j in nodups[i]:
-                if molData[j].get('ring'):
-                    molData[j]['ring'].append(i+1)
-                else:
-                    molData[j]['ring'] = [i+1]
-        #mark aromatic rings
-        [r.__setitem__('aromatic',True) for r in molData.rings.values() \
-                if len(r['atoms']) in [5,6]]
-        if log: log.debug('%d rings found' %len(nodups))
-        return True
+        if not has_aromatic_valences: break
+    if has_aromatic_valences: log.debug("{0} has the valences expected for a planar ring and will be treated as such".format(map(lambda x:data[x]["symbol"], ring['atoms'])))
+    else: log.debug("{0} DOES NOT have the valences expected for a planar ring and will not be treated as such".format(map(lambda x:data[x]["symbol"], ring['atoms'])))
+    return has_aromatic_valences
+
+def _serialize_weighted_graph(G, indent="", output=[]):
+    for node, branches in G.items():
+        line = indent + str(node)
+        if type(branches) is dict:
+            output.append( line + "--" )
+            _serialize_weighted_graph(branches, indent=" "*4, output=output)
+        else:
+            line += ": {0}".format(branches)
+            output.append( line )
+
+def is_ring_planar(data, ring, log):
+    atoms = data.atoms
+    coord_type = "ocoord" if "ocoord" in atoms.values()[0] else "coord"
+
+    ring_atoms = [atoms[atom_id] for atom_id in ring["atoms"]]
+
+    A,B,C,D = equation_of_plane(ring_atoms[0][coord_type],
+                              ring_atoms[1][coord_type],
+                              ring_atoms[2][coord_type],
+                              )
+    max_distance = 0
+    for atom in ring_atoms[3:]:
+        distance = _distance_from_plane(A,B,C,D,atom[coord_type])
+        max_distance = max(abs(distance), max_distance)
+        if abs(distance) > PLANAR_DISTANCE_TOL:
+            return False
+    log.debug("Maximum distance to plane is {0:.3f}nm ({1})".format(max_distance,
+                                                                         map(lambda x:data[x]["symbol"], ring["atoms"]),
+                                                                         )
+                         )
+    return True
+
+def equation_of_plane(a0, a1, a2):
+    det1 = ( (a1[1]-a0[1])*(a2[2]-a0[2]) ) - ( (a2[1]-a0[1])*(a1[2]-a0[2]) )
+    det2 = ( (a1[2]-a0[2])*(a2[0]-a0[0]) ) - ( (a2[2]-a0[2])*(a1[0]-a0[0]) )
+    det3 = ( (a1[0]-a0[0])*(a2[1]-a0[1]) ) - ( (a2[0]-a0[0])*(a1[1]-a0[1]) )
+    D = det1 * a0[0] + det2 * a0[1] + det3 * a0[2]
+    D = -D
+    return det1, det2, det3, D
+
+def _distance_from_plane(A, B, C, D, pt):
+    x, y, z = pt
+    denom = sqrt(A**2+B**2+C**2)
+    if not denom: return 0
+    numer = A*x + B*y + C*z + D
+    distance = numer/denom
+    return distance
+
+def _get_all_rings_for_bond(mol_graph, bond_atom_ids):
+
+    i0 = str(bond_atom_ids[0])
+    i1 = str(bond_atom_ids[1])
+    all_rings = []
+    mol_graph[i0][i1] = 999
+    found = True
+    while found:
+        found = False
+        ring = shortestPath(mol_graph,
+                            i0,
+                            i1,
+                            )
+        if not ring in all_rings:
+            all_rings.append(ring)
+            found = True
+            for i in range(len(ring)-1):
+                mol_graph[ring[i]][ring[i+1]] = 2
+    mol_graph[i0][i1] = 1
+    return all_rings
+
+def _get_graph_dict(atoms):
+    G = {}
+    for atom_id, atom in atoms.items():
+        tmp = {}
+        for i in atom["conn"]:
+            tmp[str(i)] = 1
+        G[str(atom_id)] = tmp
+    return G

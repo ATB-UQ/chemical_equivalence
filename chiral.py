@@ -7,7 +7,7 @@ def getNeighboursEquivalenceGroups(atom, molData):
     listIDEq = [(neighbour, molData.atoms[neighbour]["equivalenceGroup"]) for neighbour in atom["conn"] if molData.atoms[neighbour]["equivalenceGroup"] != -1 ]
     # return dictionary of: id's -> equivalence groups
     return dict(listIDEq) 
-        
+
 def hasStereogenicAtom(molData, log):
     hasCenter = False
     for atom in molData.atoms.values():
@@ -22,13 +22,13 @@ def isSterogenicAtom(atom, molData):
 def hasAllDifferentNeighbours(atom, molData):
     # Get the equivalence groups of the neighbours
     neighbours_equivalence_groups = getNeighboursEquivalenceGroups(atom, molData)
-    
+
     # remove case where atoms are not in any equivalence group
     neighbours_equivalence_groups_filtered = dict(filter(lambda x:x[1] != -1, neighbours_equivalence_groups.items()))
-    
+
     # check if all atoms are in different equivalence groups
     return all([count == 1 for _, count in countValueGroups(neighbours_equivalence_groups_filtered).items()])
-    
+
 
 def has4ConnectingGroups(atom):
     # is possibly steriogenic if atom has at least four neighbours
@@ -45,11 +45,11 @@ def hasStereoheterotopicNeighbours(neighbours_equivalence_groups, log):
         # If there are exactly two equivalent neighbours bonded to the 'atm' atom 
         if occurence == MINIMUM_IDENTICAL_NEIGHBOUR_COUNT_FOR_CHIRAL:
             countStereoheterotopicGroups += 1
-    
+
     # This is the common case of stereoheterotopic atoms
     if countStereoheterotopicGroups == 1:
         return True
-    
+
     # This case is incorrectly handled as we don't know whether the chiral atoms are
     # in S or R configuration. To be more accurate we would return true only if the chrality is different
     elif countStereoheterotopicGroups == 2:
@@ -68,10 +68,10 @@ def getStereoheterotopicAtomGroups(neighbours_equivalence_groups):
 
 def containsStereoheterotopicAtoms(molData, flavourCounter, log):
     should_rerun = False
-    
+
     if not hasStereogenicAtom(molData, log): 
         return should_rerun
-    
+
     if log: log.debug("HAS AT LEAST ONE STEREOGENIC ATOM. NOW LOOKING FOR STEREOHETEROTOPIC ATOMS.")
     # For every atom 'atm'
     for atom in molData.atoms.values():

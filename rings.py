@@ -6,7 +6,7 @@ def containsInversableRings(molData, flavourCounter, log=None):
     rings = molData.rings.values()
     for ring in rings:
         ring_atoms = atomsWithIndexes(all_atoms, ring['atoms'])
-        
+
         if not is_inversable_ring(ring_atoms,log) :
             continue
         if log: log.debug('Found inversable ring that could disturb chemical equivalency: {0}'.format(atomNames(ring_atoms)))
