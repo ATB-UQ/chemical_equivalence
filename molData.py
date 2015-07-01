@@ -116,6 +116,9 @@ class MolData(object):
 
         #sort and unique connectivities
         for ID, atom in pdbDict.items():
+            if not "conn" in atom:
+                atom["conn"] = [] 
+                continue
             atom['conn'] = sorted(list(set(atom['conn'])))
             for neighbour in atom['conn']:
                 self._addBondData(ID, neighbour)
