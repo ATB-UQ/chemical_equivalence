@@ -45,7 +45,7 @@ def clearEqGroupData(molData):
     for atom in molData.atoms.values():
         del atom["equivalenceGroup"]
 
-def partial_mol_data(pdb_string):
+def partial_mol_data_for_pdbstr(pdb_string):
     data = MolData(pdb_string)
     getChemEquivGroups(data)
     return data
