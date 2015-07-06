@@ -1,3 +1,4 @@
+import sys
 from NautyInterface import NautyInterface
 from molData import MolData
 from optparse import OptionParser
@@ -45,9 +46,13 @@ def clearEqGroupData(molData):
     for atom in molData.atoms.values():
         del atom["equivalenceGroup"]
 
-def partial_mol_data_for_pdbstr(pdb_string):
+def partial_mol_data_for_pdbstr(pdb_string, united_atoms=True, debug=False):
     data = MolData(pdb_string)
     getChemEquivGroups(data)
+    if united_atoms:
+        if debug:   sys.stderr.write("All atoms: {0}\n".format("".join([a["type"] for a in data.atoms.values()])))
+        data.unite_atoms()
+        if debug:   sys.stderr.write("United atoms: {0}\n".format("".join([a["type"] for a in data.atoms.values()])))
     return data
 
 def parseCommandline():

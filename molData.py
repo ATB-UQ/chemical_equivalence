@@ -1,4 +1,5 @@
 from build_rings import build_rings
+from copy import deepcopy
 
 class MolData(object):
 
@@ -8,6 +9,23 @@ class MolData(object):
         self.equivalenceGroups = {}
         self._readPDB(pdbStr)
         self.rings = build_rings(self, log)
+        self.removed_atoms_when_united = {}
+        self.removed_bonds_when_united = []
+
+    def unite_atoms(self):
+        for atom in deepcopy(self.atoms).values():
+            connected_hydrogens = [a_id for a_id in atom["conn"] if self.atoms[a_id]["type"] == "H"]
+            if atom["type"] == "C" and len(connected_hydrogens) > 1:
+                for a_id in connected_hydrogens:
+                    self.removed_atoms_when_united[a_id] = self.atoms[a_id]
+                    del self.atoms[a_id]
+        self._unite_bonds()
+
+    def _unite_bonds(self):
+        for bond in deepcopy(self.bonds):
+            if any([a in self.removed_atoms_when_united.keys() for a in bond["atoms"]]):
+                self.removed_bonds_when_united.append(bond)
+                del self.bonds[self.bonds.index(bond)]
 
     def get_id(self,index):
         '''return id of the atom with specified index number'''
@@ -20,24 +38,6 @@ class MolData(object):
             return self.atoms[atomid]
         except:
             raise Exception, 'atom with id number %d not found.' % atomid
-
-    def _addAtomData(self, index, symbol=None, aType=None, charge=None, coord=None, cg=None):
-
-        index = int(index)
-        if index not in self.atoms.keys():
-            self.atoms[index] = {}
-
-        self.atoms[index]["index"] = index
-        if symbol is not None:
-            self.atoms[index]["symbol"] = symbol
-        if aType is not None:
-            self.atoms[index]["iacm"] = aType
-        if charge is not None:
-            self.atoms[index]["charge"] = float(charge)
-        if coord is not None:
-            self.atoms[index]["ocoord"] = coord
-        if cg is not None:
-            self.atoms[index]["cg"] = cg
 
     def _addBondData(self, atm1, atm2):
         if atm1 == atm2:
