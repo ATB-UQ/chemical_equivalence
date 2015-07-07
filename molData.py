@@ -1,5 +1,4 @@
 from build_rings import build_rings
-from copy import deepcopy
 
 class MolData(object):
 
@@ -9,23 +8,28 @@ class MolData(object):
         self.equivalenceGroups = {}
         self._readPDB(pdbStr)
         self.rings = build_rings(self, log)
-        self.removed_atoms_when_united = {}
-        self.removed_bonds_when_united = []
+        self.united_hydrogens = []
 
     def unite_atoms(self):
-        for atom in deepcopy(self.atoms).values():
+        self.united_hydrogens = []
+        for atom in self.atoms.values():
             connected_hydrogens = [a_id for a_id in atom["conn"] if self.atoms[a_id]["type"] == "H"]
             if atom["type"] == "C" and len(connected_hydrogens) > 1:
-                for a_id in connected_hydrogens:
-                    self.removed_atoms_when_united[a_id] = self.atoms[a_id]
-                    del self.atoms[a_id]
+                self.united_hydrogens.extend([a_id for a_id in connected_hydrogens])
+
+        united_atoms = []
+        for atom_id, atom in sorted(self.atoms.items()):
+            if atom_id not in self.united_hydrogens:
+                united_atoms.append(atom_id)
+                self.atoms[atom_id]["uindex"] = len(united_atoms)
         self._unite_bonds()
 
     def _unite_bonds(self):
-        for bond in deepcopy(self.bonds):
-            if any([a in self.removed_atoms_when_united.keys() for a in bond["atoms"]]):
-                self.removed_bonds_when_united.append(bond)
-                del self.bonds[self.bonds.index(bond)]
+        for bond in self.bonds:
+            if any([a in self.united_hydrogens for a in bond["atoms"]]):
+                continue
+            else:
+                bond["united"] = True
 
     def get_id(self,index):
         '''return id of the atom with specified index number'''

@@ -1,10 +1,9 @@
 import math
 from config import DOUBLE_BOND_LENGTH_CUTOFF
 
-
 def containsEquivalenceBreakingDoubleBond(molData, flavourCounter, log=None):
     should_rerun = False
-    
+
     connected_sp2_carbons = connectedSp2Carbons(molData.atoms, log)
     for atom1, atom2 in connected_sp2_carbons:
         if log: log.debug('Found double bond that could disturb chemical equivalency: {0}'.format(atomNames([atom1, atom2])))
@@ -19,16 +18,16 @@ def containsEquivalenceBreakingDoubleBond(molData, flavourCounter, log=None):
                                  atom2Neighbours=",".join(map(lambda n:n["symbol"], neighbours[atom2["index"]])),
                                 )
                          )
-        
+
         requiers_rerun = correctSymmetry(neighbours, flavourCounter, log)
         if requiers_rerun:  should_rerun = True
-        
+
     return should_rerun
 
 def correctSymmetry(neighbours, flavourCounter, log):
     should_rerun = False
     neighbourListLeft, neighbourListRight = neighbours.values()
-    
+
     # Try matching them two by two
     if areAtomsChemicallyEquivalent(*neighbourListLeft) and not areAtomsChemicallyEquivalent(*neighbourListRight):
         if log:
@@ -54,11 +53,10 @@ def correctSymmetry(neighbours, flavourCounter, log):
         should_rerun = True
     # If they belong to the same groups, then they need to be colored
     # so that no face in more symetric than the other
-        
+
     if log and not should_rerun: log.debug("    Double bond does NOT break chemical equivalence due to symmetry about double bond axis")
     return should_rerun
-    
-    
+
 def areAtomsChemicallyEquivalent(atom1, atom2):
     atom1EquivalenceGroup = atom1["equivalenceGroup"]
     atom2EquivalenceGroup = atom2["equivalenceGroup"]
@@ -91,7 +89,7 @@ def connectedSp2Carbons(atoms, log):
                 connected_sp2_carbons.append( doubleBondPair )
     if log:
         log.debug("Found the following sp2 carbon atoms in a double bond: {0}".format(" ".join(["{0}=={1}".format(a1["symbol"], a2["symbol"]) for a1, a2 in connected_sp2_carbons ])))
-    
+
     return connected_sp2_carbons
 
 def alreadyAdded(doubleBondPair, connected_sp2_carbons):
@@ -104,7 +102,7 @@ def isConnectedToSp2Carbon(atom, atoms):
     for neighbourAtomID in atom["conn"]:
         if isSp2CarbonAtom(atoms[neighbourAtomID]):
             return True
-        
+
 def getConnectedSp2Carbon(atom, atoms):
     for neighbourAtomID in atom["conn"]:
         if isSp2CarbonAtom(atoms[neighbourAtomID]) and suitableBondLength(atom, atoms[neighbourAtomID]):
@@ -118,7 +116,7 @@ def isCarbon(atom):
 
 def has3Neighbours(atom):
     return len(atom["conn"]) == 3
-    
+
 def hasSuitableBondLength(atom1, atoms):
     for atom2 in atoms.values():
         if suitableBondLength(atom1, atom2):
@@ -128,6 +126,6 @@ def suitableBondLength(atom1, atom2):
     coord_key = "ocoord" if "ocoord" in atom1 else "coord"
     if _dist(atom1[coord_key], atom2[coord_key]) < DOUBLE_BOND_LENGTH_CUTOFF:
         return True
-    
+
 def _dist(p1, p2):
     return math.sqrt((p1[0]-p2[0])**2 + (p1[1]-p2[1])**2 + (p1[2]-p2[2])**2 )

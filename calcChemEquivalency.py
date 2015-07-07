@@ -52,7 +52,7 @@ def partial_mol_data_for_pdbstr(pdb_string, united_atoms=True, debug=False):
     if united_atoms:
         if debug:   sys.stderr.write("All atoms: {0}\n".format("".join([a["type"] for a in data.atoms.values()])))
         data.unite_atoms()
-        if debug:   sys.stderr.write("United atoms: {0}\n".format("".join([a["type"] for a in data.atoms.values()])))
+        if debug:   sys.stderr.write("United atoms: {0}\n".format("".join([a["type"] for a in data.atoms.values() if "uindex" in a])))
     return data
 
 def parseCommandline():
