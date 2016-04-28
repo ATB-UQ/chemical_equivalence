@@ -1,3 +1,4 @@
+from log_helpers import print_stderr
 from build_rings import build_rings
 
 class MolData(object):
@@ -98,7 +99,7 @@ class MolData(object):
             if pdbDict[key].has_key('conn'): # if this atom lists connections to others
                 for conn in pdbDict[key]['conn']: # for each connection to others
                     if not pdbDict.has_key(conn): # if it connects to a non-existant atom
-                        print "connectivity made from atom %s to non-existant atom %s!" % (key, conn)
+                        print_stderr("connectivity made from atom %s to non-existant atom %s!" % (key, conn))
                         if not orphanAtomReference.has_key(key): orphanAtomReference[key] = [conn]
                         else: orphanAtomReference[key].append(conn)
                         continue

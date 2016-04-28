@@ -1,4 +1,4 @@
-import sys
+from log_helpers import print_stderr
 from NautyInterface import NautyInterface
 from molData import MolData
 from optparse import OptionParser
@@ -50,9 +50,19 @@ def partial_mol_data_for_pdbstr(pdb_string, united_atoms=True, debug=False):
     data = MolData(pdb_string)
     getChemEquivGroups(data)
     if united_atoms:
-        if debug:   sys.stderr.write("All atoms: {0}\n".format("".join([a["type"] for a in data.atoms.values()])))
+        if debug:
+            print_stderr(
+                "All atoms: {0}\n".format(
+                    "".join([a["type"] for a in data.atoms.values()]),
+                ),
+            )
         data.unite_atoms()
-        if debug:   sys.stderr.write("United atoms: {0}\n".format("".join([a["type"] for a in data.atoms.values() if "uindex" in a])))
+        if debug:
+            print_stderr(
+                "United atoms: {0}\n".format(
+                    "".join([a["type"] for a in data.atoms.values() if "uindex" in a]),
+                ),
+            )
     return data
 
 def parseCommandline():
@@ -74,7 +84,7 @@ def parseCommandline():
             fh.close()
 
         except:
-            print "ERROR: there was a problem with the PDB file."
+            print_stderr("ERROR: there was a problem with the PDB file.")
             parser.print_help()
             return
 
