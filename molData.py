@@ -1,6 +1,9 @@
 from log_helpers import print_stderr
 from build_rings import build_rings
 
+class MolDataFailure(Exception):
+    pass
+
 class MolData(object):
 
     def __init__(self, pdbStr, log=None):
@@ -110,9 +113,11 @@ class MolData(object):
 
         # remove any orphan connection records
         for k, connList in orphanAtomReference.items():
-            for c in connList: 
+            for c in connList:
                 pdbDict[k]["conn"].remove(c)
-                self.log.warn("connectivity made from %s to non-existant atom %s removed" % (k, c))
+                error_msg = "connectivity made from %s to non-existant atom %s removed" % (k, c)
+                print_stderr(error_msg)
+                raise MolDataFailure(error_msg)
 
         #connectivity missing in pdb (i.e. one or more atoms not connected to molecule), terminate directly
         if sum([not i.has_key('conn') for i in pdbDict.values()]) != 0:

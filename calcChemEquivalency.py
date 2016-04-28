@@ -1,6 +1,6 @@
 from log_helpers import print_stderr
 from NautyInterface import NautyInterface
-from molData import MolData
+from molData import MolData, MolDataFailure
 from optparse import OptionParser
 from chiral import containsStereoheterotopicAtoms
 from doubleBonds import containsEquivalenceBreakingDoubleBond
