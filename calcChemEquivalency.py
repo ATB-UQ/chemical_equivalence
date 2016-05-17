@@ -47,6 +47,8 @@ def clearEqGroupData(molData):
         del atom["equivalenceGroup"]
 
 def partial_mol_data_for_pdbstr(pdb_string, united_atoms=True, debug=False):
+    assert pdb_string, 'Empty PDB string'
+
     data = MolData(pdb_string)
     getChemEquivGroups(data)
     if united_atoms:
