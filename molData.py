@@ -120,7 +120,7 @@ class MolData(object):
                 raise MolDataFailure(error_msg)
 
         has_connects = lambda atom: 'conn' in atom and atom['conn']
-        if not all([has_connects(atom) for atom in pdbDict.values()]) or True:
+        if not all([has_connects(atom) for atom in pdbDict.values()]):
             raise MolDataFailure(
                  'Mol_Data Error: Missing connectivities for atoms {0}'.format(
                     [atom['index'] for atom in pdbDict.values() if not has_connects(atom)],
