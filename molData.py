@@ -119,16 +119,16 @@ class MolData(object):
                 print_stderr(error_msg)
                 raise MolDataFailure(error_msg)
 
-        #connectivity missing in pdb (i.e. one or more atoms not connected to molecule), terminate directly
-        if sum([not i.has_key('conn') for i in pdbDict.values()]) != 0:
-            missings = filter(lambda x:not pdbDict[x].has_key('conn'), pdbDict.keys())
-            missings = [str(m) for m in missings]
+        has_connects = lambda atom: 'conn' in atom and atom['conn']
+        if not all([has_connects(atom) for atom in pdbDict.values()]) or True:
+            raise MolDataFailure(
+                 'Mol_Data Error: Missing connectivities for atoms {0}'.format(
+                    [atom['index'] for atom in pdbDict.values() if not has_connects(atom)],
+                ),
+            )
 
-        #sort and unique connectivities
+        # sort and unique connectivities
         for ID, atom in pdbDict.items():
-            if not "conn" in atom:
-                atom["conn"] = [] 
-                continue
             atom['conn'] = sorted(list(set(atom['conn'])))
             for neighbour in atom['conn']:
                 self._addBondData(ID, neighbour)
