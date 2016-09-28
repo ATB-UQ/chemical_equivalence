@@ -2,7 +2,7 @@
 # David Eppstein, UC Irvine, 4 April 2002
 
 # http://aspn.activestate.com/ASPN/Cookbook/Python/Recipe/117228
-from priodict import priorityDictionary
+from .priodict import priorityDictionary
 
 def Dijkstra(G,start,end=None):
     """
@@ -60,8 +60,7 @@ def Dijkstra(G,start,end=None):
             vwLength = D[v] + G[v][w]
             if w in D:
                 if vwLength < D[w]:
-                    raise ValueError, \
-  "Dijkstra: found better path to already-final vertex"
+                    raise ValueError("Dijkstra: found better path to already-final vertex")
             elif w not in Q or vwLength < Q[w]:
                 Q[w] = vwLength
                 P[w] = v

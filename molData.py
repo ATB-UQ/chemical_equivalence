@@ -1,5 +1,5 @@
-from log_helpers import print_stderr
-from build_rings import build_rings
+from .log_helpers import print_stderr
+from .build_rings import build_rings
 
 class MolDataFailure(Exception):
     pass
@@ -16,7 +16,7 @@ class MolData(object):
 
     def unite_atoms(self):
         self.united_hydrogens = []
-        for atom in self.atoms.values():
+        for atom in list(self.atoms.values()):
             connected_hydrogens = [a_id for a_id in atom["conn"] if self.atoms[a_id]["type"] == "H"]
             if atom["type"] == "C" and len(connected_hydrogens) > 1:
                 self.united_hydrogens.extend([a_id for a_id in connected_hydrogens])
@@ -37,7 +37,7 @@ class MolData(object):
 
     def get_id(self,index):
         '''return id of the atom with specified index number'''
-        return [k for (k,v) in self.atoms.items() if v['index'] == index][0]
+        return [k for (k,v) in list(self.atoms.items()) if v['index'] == index][0]
 
     def __getitem__(self, atomid):
         '''return an atom with atomid. '''
@@ -45,7 +45,7 @@ class MolData(object):
         try:
             return self.atoms[atomid]
         except:
-            raise Exception, 'atom with id number %d not found.' % atomid
+            raise Exception('atom with id number %d not found.' % atomid)
 
     def _addBondData(self, atm1, atm2):
         if atm1 == atm2:
@@ -56,6 +56,7 @@ class MolData(object):
 
     def _readPDB(self, string):
         '''Read lines of PDB files'''
+        assert type(string) == str
 
         pdbDict = {}
         for line in string.splitlines():
@@ -78,7 +79,7 @@ class MolData(object):
             #connectivity records
             if line.startswith('CONECT'):
                 it = line.split()
-                for key, item in pdbDict.items():
+                for key, item in list(pdbDict.items()):
                     if key == int(it[1]):
                         conn_list = []
                         for i in it[2:6]:
@@ -89,7 +90,7 @@ class MolData(object):
                                 conn_list.append(num)
                             except Exception:
                                 break
-                        if item.has_key('conn'):
+                        if 'conn' in item:
                             item['conn'].extend(conn_list)
                         else:
                             item['conn'] = conn_list
@@ -99,20 +100,20 @@ class MolData(object):
         # flag any orphan connectivities for removal
         orphanAtomReference = {}
         for key in pdbDict: # for each atom in pdb
-            if pdbDict[key].has_key('conn'): # if this atom lists connections to others
+            if 'conn' in pdbDict[key]: # if this atom lists connections to others
                 for conn in pdbDict[key]['conn']: # for each connection to others
-                    if not pdbDict.has_key(conn): # if it connects to a non-existant atom
+                    if conn not in pdbDict: # if it connects to a non-existant atom
                         print_stderr("connectivity made from atom %s to non-existant atom %s!" % (key, conn))
-                        if not orphanAtomReference.has_key(key): orphanAtomReference[key] = [conn]
+                        if key not in orphanAtomReference: orphanAtomReference[key] = [conn]
                         else: orphanAtomReference[key].append(conn)
                         continue
-                    if pdbDict[conn].has_key('conn'): # if the other atom has a list of connections
+                    if 'conn' in pdbDict[conn]: # if the other atom has a list of connections
                         pdbDict[conn]['conn'].append(key) # append this atom to the end of the other atom's list
                     else:
                         pdbDict[conn]['conn'] = [ key ] # create new list containing this atom
 
         # remove any orphan connection records
-        for k, connList in orphanAtomReference.items():
+        for k, connList in list(orphanAtomReference.items()):
             for c in connList:
                 pdbDict[k]["conn"].remove(c)
                 error_msg = "connectivity made from %s to non-existant atom %s removed" % (k, c)
@@ -120,15 +121,15 @@ class MolData(object):
                 raise MolDataFailure(error_msg)
 
         has_connects = lambda atom: 'conn' in atom and atom['conn']
-        if not all([has_connects(atom) for atom in pdbDict.values()]):
+        if not all([has_connects(atom) for atom in list(pdbDict.values())]):
             raise MolDataFailure(
                  'Mol_Data Error: Missing connectivities for atoms {0}'.format(
-                    [atom['index'] for atom in pdbDict.values() if not has_connects(atom)],
+                    [atom['index'] for atom in list(pdbDict.values()) if not has_connects(atom)],
                 ),
             )
 
         # sort and unique connectivities
-        for ID, atom in pdbDict.items():
+        for ID, atom in list(pdbDict.items()):
             atom['conn'] = sorted(list(set(atom['conn'])))
             for neighbour in atom['conn']:
                 self._addBondData(ID, neighbour)

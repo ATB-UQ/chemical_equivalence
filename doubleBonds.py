@@ -1,5 +1,5 @@
 import math
-from config import DOUBLE_BOND_LENGTH_CUTOFF
+from .config import DOUBLE_BOND_LENGTH_CUTOFF
 
 def containsEquivalenceBreakingDoubleBond(molData, flavourCounter, log=None):
     should_rerun = False
@@ -14,8 +14,8 @@ def containsEquivalenceBreakingDoubleBond(molData, flavourCounter, log=None):
         if log: log.debug("    Double bond neighbourhood: ({atom1Neighbours})--{atom1}={atom2}--({atom2Neighbours})"\
                          .format(atom1=atom1["symbol"], 
                                  atom2=atom2["symbol"],
-                                 atom1Neighbours=",".join(map(lambda n:n["symbol"], neighbours[atom1["index"]])),
-                                 atom2Neighbours=",".join(map(lambda n:n["symbol"], neighbours[atom2["index"]])),
+                                 atom1Neighbours=",".join([n["symbol"] for n in neighbours[atom1["index"]]]),
+                                 atom2Neighbours=",".join([n["symbol"] for n in neighbours[atom2["index"]]]),
                                 )
                          )
 
@@ -26,7 +26,7 @@ def containsEquivalenceBreakingDoubleBond(molData, flavourCounter, log=None):
 
 def correctSymmetry(neighbours, flavourCounter, log):
     should_rerun = False
-    neighbourListLeft, neighbourListRight = neighbours.values()
+    neighbourListLeft, neighbourListRight = list(neighbours.values())
 
     # Try matching them two by two
     if areAtomsChemicallyEquivalent(*neighbourListLeft) and not areAtomsChemicallyEquivalent(*neighbourListRight):
@@ -34,7 +34,7 @@ def correctSymmetry(neighbours, flavourCounter, log):
             log.debug('    Found asymmetric substituents on one side of the double bond that will break the symmetry of the other side: {0}'.format(atomNames(neighbourListRight)
                                                                                                                                                     )
                       )
-            log.debug("    Removed chemical equivalence between {0} and {1} (other side of the double bond)".format(*map(lambda x:x["symbol"], neighbourListLeft) 
+            log.debug("    Removed chemical equivalence between {0} and {1} (other side of the double bond)".format(*[x["symbol"] for x in neighbourListLeft] 
                                                                                                                     ) 
                       )
         neighbourListLeft[0]["flavour"] = flavourCounter.getNext()
@@ -45,7 +45,7 @@ def correctSymmetry(neighbours, flavourCounter, log):
             log.debug('    Found asymmetric substituents on one side of the double bond that will break the symmetry of the other side: {0}'.format( atomNames(neighbourListLeft)
                                                                                                                                                      )
                       )
-            log.debug("    Removed chemical equivalence between {0} and {1} (other side of the double bond)".format( *map(lambda x:x["symbol"], neighbourListRight)
+            log.debug("    Removed chemical equivalence between {0} and {1} (other side of the double bond)".format( *[x["symbol"] for x in neighbourListRight]
                                                                                                                      ) 
                       )
         neighbourListRight[0]["flavour"] = flavourCounter.getNext()
@@ -66,7 +66,7 @@ def areAtomsChemicallyEquivalent(atom1, atom2):
         return atom1EquivalenceGroup == atom2EquivalenceGroup
 
 def atomNames(atom_list):
-    return ', '.join(map(lambda x: x['symbol'], atom_list))
+    return ', '.join([x['symbol'] for x in atom_list])
 
 def atomsWithIndexes(atoms, indexes):
     return [ atom for atom in atoms if atom['index'] in indexes ]
@@ -79,7 +79,7 @@ def getNeighboursExcludingOne(atom, excludedAtom, molData):
 
 def connectedSp2Carbons(atoms, log):
     connected_sp2_carbons = []
-    for atom in atoms.values():
+    for atom in list(atoms.values()):
         if isSp2CarbonAtom(atom) and isConnectedToSp2Carbon(atom, atoms) and hasSuitableBondLength(atom, atoms):
             atom2 = getConnectedSp2Carbon(atom, atoms)
             if not atom2:
@@ -118,7 +118,7 @@ def has3Neighbours(atom):
     return len(atom["conn"]) == 3
 
 def hasSuitableBondLength(atom1, atoms):
-    for atom2 in atoms.values():
+    for atom2 in list(atoms.values()):
         if suitableBondLength(atom1, atom2):
             return True
 

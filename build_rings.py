@@ -1,6 +1,6 @@
 from copy import deepcopy
 from math import sqrt
-from utilities.dijkstra import shortestPath
+from .utilities.dijkstra import shortestPath
 ACCEPTED_PLANAR_VALENCE_PER_ATOM_TYPE = { 
     'C': [3],
     'N': [2, 3], # For pyridine
@@ -12,7 +12,7 @@ PLANAR_DISTANCE_TOL = 0.025
 def build_rings(data, log=None):
 
     def _is_ring_in_all_rings(ring, all_rings):
-        for existing_ring in all_rings.values():
+        for existing_ring in list(all_rings.values()):
             if frozenset(existing_ring["atoms"]) == frozenset(ring):
                 return True
         return False
@@ -29,7 +29,7 @@ def build_rings(data, log=None):
         rings = _get_all_rings_for_bond(deepcopy(mol_graph), bond["atoms"])
         for ring in rings:
             if len(ring)==2: continue
-            ring = map(int, ring)
+            ring = list(map(int, ring))
             if not _is_ring_in_all_rings(ring, all_rings):
                 ring_dict = {"atoms": ring, "aromatic": False}
                 ring_dict["aromatic"] = is_ring_aromatic(data, ring_dict, log)
@@ -54,19 +54,19 @@ def has_ring_planar_valences(data, ring, log):
     ring_atoms = [ data.atoms[index] for index in ring['atoms'] ]
     has_aromatic_valences = True
     for atom in ring_atoms:
-        for atom_type, accepted_valences in ACCEPTED_PLANAR_VALENCE_PER_ATOM_TYPE.items():
+        for atom_type, accepted_valences in list(ACCEPTED_PLANAR_VALENCE_PER_ATOM_TYPE.items()):
             if atom['type'].upper() == atom_type:
                 if not len(atom['conn']) in accepted_valences: has_aromatic_valences = False
                 break
         if not has_aromatic_valences: break
     if has_aromatic_valences:
-        if log: log.debug("{0} has the valences expected for a planar ring and will be treated as such".format(map(lambda x:data[x]["symbol"], ring['atoms'])))
+        if log: log.debug("{0} has the valences expected for a planar ring and will be treated as such".format([data[x]["symbol"] for x in ring['atoms']]))
     else:
-        if log: log.debug("{0} DOES NOT have the valences expected for a planar ring and will not be treated as such".format(map(lambda x:data[x]["symbol"], ring['atoms'])))
+        if log: log.debug("{0} DOES NOT have the valences expected for a planar ring and will not be treated as such".format([data[x]["symbol"] for x in ring['atoms']]))
     return has_aromatic_valences
 
 def _serialize_weighted_graph(G, indent="", output=[]):
-    for node, branches in G.items():
+    for node, branches in list(G.items()):
         line = indent + str(node)
         if type(branches) is dict:
             output.append( line + "--" )
@@ -77,7 +77,7 @@ def _serialize_weighted_graph(G, indent="", output=[]):
 
 def is_ring_planar(data, ring, log):
     atoms = data.atoms
-    coord_type = "ocoord" if "ocoord" in atoms.values()[0] else "coord"
+    coord_type = "ocoord" if "ocoord" in list(atoms.values())[0] else "coord"
 
     ring_atoms = [atoms[atom_id] for atom_id in ring["atoms"]]
 
@@ -92,7 +92,7 @@ def is_ring_planar(data, ring, log):
         if abs(distance) > PLANAR_DISTANCE_TOL:
             return False
     if log: log.debug("Maximum distance to plane is {0:.3f}nm ({1})".format(max_distance,
-                                                                         map(lambda x:data[x]["symbol"], ring["atoms"]),
+                                                                         [data[x]["symbol"] for x in ring["atoms"]],
                                                                          )
                          )
     return True
@@ -136,7 +136,7 @@ def _get_all_rings_for_bond(mol_graph, bond_atom_ids):
 
 def _get_graph_dict(atoms):
     G = {}
-    for atom_id, atom in atoms.items():
+    for atom_id, atom in list(atoms.items()):
         tmp = {}
         for i in atom["conn"]:
             tmp[str(i)] = 1

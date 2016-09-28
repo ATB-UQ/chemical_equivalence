@@ -24,7 +24,7 @@ class NautyInterface(object):
 
     def _getLogInfo(self):
         output = ""
-        for grpID, atomsIndexs in self.data.equivalenceGroups.items():
+        for grpID, atomsIndexs in list(self.data.equivalenceGroups.items()):
             atmNames = [self.data[self.data.get_id(i)]["symbol"] for i in atomsIndexs]
             output += "\n{0}: {1}".format(str(grpID), " ".join(atmNames))
         return output
@@ -40,18 +40,18 @@ class NautyInterface(object):
             expandedEqGroup = []
             for element in grp:
                 if ":" in element:
-                    start, stop = map(int,element.split(":"))
-                    expandedEqGroup.extend(range(start, stop + 1))
+                    start, stop = list(map(int,element.split(":")))
+                    expandedEqGroup.extend(list(range(start, stop + 1)))
                 else:
                     expandedEqGroup.append(int(element))
 
             # append sym group and shift indexes up by 1
             if len(expandedEqGroup) > 1:
-                self.data.equivalenceGroups[len(self.data.equivalenceGroups)] = map(lambda x:x+1, expandedEqGroup)
+                self.data.equivalenceGroups[len(self.data.equivalenceGroups)] = [x+1 for x in expandedEqGroup]
 
-        for atmID, atm in self.data.atoms.items():
+        for atmID, atm in list(self.data.atoms.items()):
             found = False
-            for eqGrpID, eqGrp in self.data.equivalenceGroups.items():
+            for eqGrpID, eqGrp in list(self.data.equivalenceGroups.items()):
                 if atm["index"] in eqGrp:
                     self.data.atoms[atmID]["equivalenceGroup"] = int(eqGrpID)
                     found = True
@@ -71,7 +71,7 @@ class NautyInterface(object):
     def genNautyGraph(self):
         graphStr = ""
         for bond in self.data.bonds:
-            graphStr += "{0}:{1};".format(*map(lambda x:x-1, bond['atoms']))
+            graphStr += "{0}:{1};".format(*[x-1 for x in bond['atoms']])
         return graphStr
 
     def genNautyPartition(self):
@@ -80,9 +80,9 @@ class NautyInterface(object):
         atomTypes = {}
 
         # Accumulate atom indexes
-        for atm in self.data.atoms.values():
+        for atm in list(self.data.atoms.values()):
             atom_class_identifier = 'iacm' if 'iacm' in atm else 'type'
-            if atm.has_key("flavour"):
+            if "flavour" in atm:
                 # append flavour to atom_class_identifier in order to distinguish between stereoheterotopic atoms,
                 # the 1000 is chosen as a large number that is much greater than the 80 existing atom types
                 distinguishingID = 1000+atm["flavour"]
@@ -91,15 +91,15 @@ class NautyInterface(object):
                 atomTypes.setdefault(atm[atom_class_identifier],[]).append(atm['index'])
 
         # Shift atom indexes by one to match dreadnaut's convention (starts at 0)
-        for atomType in atomTypes.keys():
-            atomTypes[atomType] = map(lambda x:x-1, atomTypes[atomType])
+        for atomType in list(atomTypes.keys()):
+            atomTypes[atomType] = [x-1 for x in atomTypes[atomType]]
 
         # Format it in dreadnaut's partition format. Ex: 1,2,3|4,5,6
-        return '|'.join( [ ','.join( map(str,v) ) for v in atomTypes.values() ] )
+        return '|'.join( [ ','.join( map(str,v) ) for v in list(atomTypes.values()) ] )
 
 def _run(args, stdin, errorLog=None):
-    tmp = tempfile.TemporaryFile(bufsize=0)
-    tmp.write(stdin)
+    tmp = tempfile.TemporaryFile(buffering=0)
+    tmp.write(stdin.encode())
     tmp.seek(0)
 
     proc = subprocess.Popen(args, stdin=tmp, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -108,4 +108,4 @@ def _run(args, stdin, errorLog=None):
     tmp.close()
     if stderr and errorLog:
         errorLog.debug(stderr)
-    return stdout.strip()
+    return stdout.strip().decode()

@@ -1,10 +1,10 @@
-from log_helpers import print_stderr
-from NautyInterface import NautyInterface
-from molData import MolData, MolDataFailure
+from .log_helpers import print_stderr
+from .NautyInterface import NautyInterface
+from .molData import MolData, MolDataFailure
 from optparse import OptionParser
-from chiral import containsStereoheterotopicAtoms
-from doubleBonds import containsEquivalenceBreakingDoubleBond
-from rings import containsInversableRings
+from .chiral import containsStereoheterotopicAtoms
+from .doubleBonds import containsEquivalenceBreakingDoubleBond
+from .rings import containsInversableRings
 import logging
 
 def getChemEquivGroups(molData, log=None):
@@ -43,7 +43,7 @@ def chemicalEquivalenceExceptions(molData, flavourCounter, log):
 
 def clearEqGroupData(molData):
     molData.equivalenceGroups = {}
-    for atom in molData.atoms.values():
+    for atom in list(molData.atoms.values()):
         del atom["equivalenceGroup"]
 
 def partial_mol_data_for_pdbstr(pdb_string, united_atoms=True, debug=False):
@@ -55,14 +55,14 @@ def partial_mol_data_for_pdbstr(pdb_string, united_atoms=True, debug=False):
         if debug:
             print_stderr(
                 "All atoms: {0}\n".format(
-                    "".join([a["type"] for a in data.atoms.values()]),
+                    "".join([a["type"] for a in list(data.atoms.values())]),
                 ),
             )
         data.unite_atoms()
         if debug:
             print_stderr(
                 "United atoms: {0}\n".format(
-                    "".join([a["type"] for a in data.atoms.values() if "uindex" in a]),
+                    "".join([a["type"] for a in list(data.atoms.values()) if "uindex" in a]),
                 ),
             )
     return data
@@ -96,7 +96,7 @@ def parseCommandline():
 
     # Run symmetrization
     nautyInterface.calcSym()
-    print nautyInterface.data.equivalenceGroups
+    print(nautyInterface.data.equivalenceGroups)
 
 if __name__=="__main__":
     logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - [%(levelname)s] - %(message)s  -->  (%(module)s.%(funcName)s: %(lineno)d)', datefmt='%d-%m-%Y %H:%M:%S')
@@ -119,7 +119,7 @@ if __name__=="__main__":
     #data = MolData(open("testing/(1S,3S)-1,3-dibromo-1,3-dichloropropane.pdb").read(), open("testing/(1S,3S)-1,3-dibromo-1,3-dichloropropane.mtb").read())
     #data = MolData(open("testing/(1R,3S)-1,3-dibromo-1,3-dichloropropane.pdb").read(), open("testing/(1R,3S)-1,3-dibromo-1,3-dichloropropane.mtb").read())
 
-    print "Rings: {0}".format( data.rings )
+    print("Rings: {0}".format( data.rings ))
     getChemEquivGroups(data, log=logging.getLogger())
-    print data.equivalenceGroups.values()
-    print "\n".join([str((at["index"], at["equivalenceGroup"])) for at in data.atoms.values()])
+    print(list(data.equivalenceGroups.values()))
+    print("\n".join([str((at["index"], at["equivalenceGroup"])) for at in list(data.atoms.values())]))

@@ -1,9 +1,9 @@
-from doubleBonds import areAtomsChemicallyEquivalent, atomsWithIndexes, neighbouringAtoms, atomNames
+from .doubleBonds import areAtomsChemicallyEquivalent, atomsWithIndexes, neighbouringAtoms, atomNames
 
 def containsInversableRings(molData, flavourCounter, log=None):
     should_rerun = False
-    all_atoms = molData.atoms.values()
-    rings = molData.rings.values()
+    all_atoms = list(molData.atoms.values())
+    rings = list(molData.rings.values())
     for ring in rings:
         ring_atoms = atomsWithIndexes(all_atoms, ring['atoms'])
 
@@ -18,7 +18,7 @@ def containsInversableRings(molData, flavourCounter, log=None):
                 if len(substituents) == 2 :
                     substituents[0]['flavour'] = flavourCounter.getNext()
                     substituents[1]['flavour'] = flavourCounter.getNext()
-                    if log: log.debug("    Make heterogeneous {0} and {1} (axial and equatorial substituents on inversable ring)".format(*map(lambda x:x['symbol'], substituents)))
+                    if log: log.debug("    Make heterogeneous {0} and {1} (axial and equatorial substituents on inversable ring)".format(*[x['symbol'] for x in substituents]))
                     should_rerun = True
                 else :
                     if log: log.debug("    There were no axial and equatorial substituent, as there were only {0} of them.".format(len(substituents)))
@@ -31,7 +31,7 @@ def is_inversable_ring(ring_atoms, log):
 
 def getSubstituents(node, atoms, ring_atoms):
     neighbours = neighbouringAtoms(node, atoms)
-    return [neighbour for neighbour in neighbours if neighbour['index'] not in map(lambda x:x['index'], ring_atoms) ]
+    return [neighbour for neighbour in neighbours if neighbour['index'] not in [x['index'] for x in ring_atoms] ]
 
 def hasDifferentSubstituent(node, atoms, ring_atoms):
     # First, get out the two ring members from the node neighbours
