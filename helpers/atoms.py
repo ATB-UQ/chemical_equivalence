@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Any
 from math import sqrt
 
 from chemical_equivalence.helpers.types import Atom
@@ -52,3 +52,19 @@ def atom_distance(atom1: Atom, atom2: Atom) -> float:
     coord_key = "ocoord" if "ocoord" in atom1 else "coord"
     p1, p2 = atom1[coord_key], atom2[coord_key]
     return sqrt((p1[0] - p2[0])**2 + (p1[1] - p2[1])**2 + (p1[2] - p2[2])**2)
+
+def is_sterogenic_atom(atom: Atom, molData: Any) -> bool:
+    return is_sp3_atom(atom) and has_all_different_neighbours(atom, molData)
+
+def has_all_different_neighbours(atom: Atom, atoms: List[Atom]) -> bool:
+    neighbour_equivalences = list(
+        filter(
+            lambda equivalence_class: equivalence_class != NO_EQUIVALENCE_VALUE,
+            [
+                neighbour_atom['equivalenceGroup']
+                for neighbour_atom in neighbouring_atoms(atom, atoms)
+            ],
+        ),
+    )
+
+    return len(set(neighbour_equivalences)) == len(neighbour_equivalences)

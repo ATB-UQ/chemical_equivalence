@@ -1,14 +1,14 @@
 from typing import Dict, Any, Optional, List
-from logging import Logger
 
+from chemical_equivalence.helpers.types import MolData, FlavourCounter, Logger, Atom
 from chemical_equivalence.helpers.atoms import are_atoms_chemically_equivalent, atom_names, atoms_with_indices, neighbouring_atoms
 
 INVERSABLE_RING_SIZES = [5, 6, 7, 8]
 
-def is_inversable_ring(ring_atoms: List[Any], log: Logger) -> bool:
+def is_inversable_ring(ring_atoms: List[Atom], log: Logger) -> bool:
     return len(ring_atoms) in INVERSABLE_RING_SIZES
 
-def containsInversableRings(molData: Any, flavourCounter: Any, log: Optional[Logger] = None):
+def contains_inversable_rings(molData: MolData, flavourCounter: FlavourCounter, log: Optional[Logger] = None) -> bool:
     all_atoms = list(molData.atoms.values())
     rings = list(molData.rings.values())
 
@@ -40,11 +40,11 @@ def containsInversableRings(molData: Any, flavourCounter: Any, log: Optional[Log
                     if log: log.debug('    Ring did not contain any asymmetrically-substituted nodes that will break the axial-equatorial symmetry')
     return should_rerun
 
-def get_ring_substituents(node, atoms, ring_atoms):
+def get_ring_substituents(node: Atom, atoms: List[Atom], ring_atoms: List[Atom]) -> List[Atom]:
     neighbours = neighbouring_atoms(node, atoms)
     return [neighbour for neighbour in neighbours if neighbour['index'] not in [x['index'] for x in ring_atoms] ]
 
-def has_different_substituent(node, atoms, ring_atoms):
+def has_different_substituent(node: Atom, atoms: List[Atom], ring_atoms: List[Atom]) -> bool:
     # First, get out the two ring members from the node neighbours
     substituents = get_ring_substituents(node, atoms, ring_atoms)
     # Then, return whether or not the are chemically equivalent
