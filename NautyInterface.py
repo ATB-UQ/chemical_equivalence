@@ -75,7 +75,6 @@ class NautyInterface(object):
                 self.data.atoms[atmID]["equivalenceGroup"] = NO_EQUIVALENCE_VALUE
         return None
 
-
     def nauty_input(self) -> str:
         return  'n={num_atoms} g {edges}.f=[{node_partition}] xo'.format(
             num_atoms=len(self.data.atoms),
