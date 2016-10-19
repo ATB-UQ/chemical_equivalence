@@ -53,7 +53,7 @@ def has_ring_planar_geometry(data, ring, log):
 def has_ring_planar_valences(data, ring, log):
     ''' Prevents rings with unual valences to be assigned as planar'''
 
-    ring_atoms = [ data.atoms[index] for index in ring['atoms'] ]
+    ring_atoms = [ data.atoms[atom_id] for atom_id in ring['atoms'] ]
     has_aromatic_valences = True
     for atom in ring_atoms:
         for atom_type, accepted_valences in list(ACCEPTED_PLANAR_VALENCE_PER_ATOM_TYPE.items()):

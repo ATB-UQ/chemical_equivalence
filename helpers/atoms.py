@@ -19,7 +19,7 @@ def atoms_with_indices(atoms: List[Atom], indices: List[int]) -> List[Atom]:
     return [
         atom
         for atom in atoms
-        if atom['index'] in indices
+        if atom['id'] in indices
     ]
 
 def neighbouring_atoms(atom: Atom, atoms: List[Atom]) -> List[Atom]:
@@ -46,7 +46,7 @@ def has_N_neighbours(atom: Atom, N: int) -> bool:
     return len(atom["conn"]) == N
 
 def are_neighbours(atom1: Atom, atom2: Atom) -> bool:
-    return any([True for index in atom1['conn'] if atom2["index"]==index ])
+    return any([True for atom_id in atom1['conn'] if atom2["id"] == atom_id])
 
 def atom_distance(atom1: Atom, atom2: Atom) -> float:
     coord_key = "ocoord" if "ocoord" in atom1 else "coord"
@@ -54,7 +54,7 @@ def atom_distance(atom1: Atom, atom2: Atom) -> float:
     return sqrt((p1[0] - p2[0])**2 + (p1[1] - p2[1])**2 + (p1[2] - p2[2])**2)
 
 def is_sterogenic_atom(atom: Atom, molData: Any) -> bool:
-    return is_sp3_atom(atom) and has_all_different_neighbours(atom, molData)
+    return is_sp3_atom(atom) and has_all_different_neighbours(atom, molData.atoms.values())
 
 def has_all_different_neighbours(atom: Atom, atoms: List[Atom]) -> bool:
     neighbour_equivalences = list(

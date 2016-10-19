@@ -135,3 +135,5 @@ class MolData(object):
                 self._addBondData(ID, neighbour)
 
         self.atoms = pdbDict
+        for (atom_id, atom) in self.atoms.items():
+            atom['id'] = atom_id
