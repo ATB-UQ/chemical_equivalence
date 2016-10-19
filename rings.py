@@ -1,4 +1,4 @@
-from .doubleBonds import areAtomsChemicallyEquivalent, atomsWithIndexes, neighbouringAtoms, atomNames
+from chemical_equivalence.doubleBonds import areAtomsChemicallyEquivalent, atomsWithIndexes, neighbouringAtoms, atomNames
 
 def containsInversableRings(molData, flavourCounter, log=None):
     should_rerun = False

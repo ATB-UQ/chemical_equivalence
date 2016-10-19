@@ -1,5 +1,5 @@
-from .log_helpers import print_stderr
-from .build_rings import build_rings
+from chemical_equivalence.log_helpers import print_stderr
+from chemical_equivalence.build_rings import build_rings
 
 class MolDataFailure(Exception):
     pass

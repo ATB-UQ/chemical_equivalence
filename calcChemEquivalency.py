@@ -1,11 +1,12 @@
-from .log_helpers import print_stderr
-from .NautyInterface import NautyInterface
-from .molData import MolData, MolDataFailure
-from optparse import OptionParser
-from .chiral import containsStereoheterotopicAtoms
-from .doubleBonds import containsEquivalenceBreakingDoubleBond
-from .rings import containsInversableRings
 import logging
+from optparse import OptionParser
+
+from chemical_equivalence.log_helpers import print_stderr
+from chemical_equivalence.NautyInterface import NautyInterface
+from chemical_equivalence.molData import MolData, MolDataFailure
+from chemical_equivalence.chiral import containsStereoheterotopicAtoms
+from chemical_equivalence.doubleBonds import containsEquivalenceBreakingDoubleBond
+from chemical_equivalence.rings import containsInversableRings
 
 def getChemEquivGroups(molData, log=None):
     # for cases with stereogenic centers we need to add flavour (some additional degree of freedom)

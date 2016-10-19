@@ -1,5 +1,5 @@
 import math
-from .config import DOUBLE_BOND_LENGTH_CUTOFF
+from chemical_equivalence.config import DOUBLE_BOND_LENGTH_CUTOFF
 
 def containsEquivalenceBreakingDoubleBond(molData, flavourCounter, log=None):
     should_rerun = False
