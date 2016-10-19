@@ -2,11 +2,12 @@ from typing import List
 from math import sqrt
 
 from chemical_equivalence.helpers.types import Atom
+from chemical_equivalence.NautyInterface import NO_EQUIVALENCE_VALUE
 
 def are_atoms_chemically_equivalent(atom1: Atom, atom2: Atom) -> bool:
     atom1EquivalenceGroup = atom1["equivalenceGroup"]
     atom2EquivalenceGroup = atom2["equivalenceGroup"]
-    if any([eqGroup == -1 for eqGroup in [atom1EquivalenceGroup, atom2EquivalenceGroup]]):
+    if any([eqGroup == NO_EQUIVALENCE_VALUE for eqGroup in [atom1EquivalenceGroup, atom2EquivalenceGroup]]):
         return False
     else:
         return atom1EquivalenceGroup == atom2EquivalenceGroup
