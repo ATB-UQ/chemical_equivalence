@@ -3,7 +3,7 @@ from logging import Logger
 
 from chemical_equivalence.helpers.types import Atom, MolData, FlavourCounter
 from chemical_equivalence.NautyInterface import NO_EQUIVALENCE_VALUE
-from helpers.atoms import is_sterogenic_atom
+from chemical_equivalence.helpers.atoms import is_sterogenic_atom
 
 MINIMUM_NEIGHBOUR_COUNT_FOR_CHIRAL = 4
 MINIMUM_IDENTICAL_NEIGHBOUR_COUNT_FOR_CHIRAL = 2

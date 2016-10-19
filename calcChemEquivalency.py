@@ -99,5 +99,5 @@ def parseCommandline() -> None:
     nautyInterface = NautyInterface(data)
 
     # Run symmetrization
-    nautyInterface.calcSym()
-    print(nautyInterface.data.equivalenceGroups)
+    #nautyInterface.calcSym()
+    #print(nautyInterface.data.equivalenceGroups)

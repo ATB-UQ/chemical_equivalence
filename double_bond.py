@@ -1,5 +1,6 @@
-from typing import Any, Optional, List, Union, Tuple
+from typing import Any, Optional, List, Union, Tuple, Dict
 from logging import Logger
+from functools import reduce
 
 from chemical_equivalence.config import DOUBLE_BOND_LENGTH_CUTOFF
 from chemical_equivalence.helpers.atoms import are_atoms_chemically_equivalent, atom_names, atoms_with_indices, neighbouring_atoms, is_sp2_carbon_atom, is_carbon, is_bonded_to_sp2_carbon, atom_distance
@@ -81,28 +82,44 @@ def getNeighboursExcludingOne(atom: Atom, excludedAtom: Atom, molData: MolData) 
         if neighbourID != excludedAtom["index"]
     ]
 
-def pairs_of_bonded_sp2_carbon_atoms(atoms: List[Atom], log: Logger) -> List[Tuple[Atom, Atom]]:
-    connected_sp2_carbons = []
+def pairs_of_bonded_sp2_carbon_atoms(atoms: Dict[int, Atom], log: Logger) -> List[Tuple[Atom, Atom]]:
+    def canonise_pair(atom_1: Atom, atom_2: Atom):
+        return tuple(
+            sorted(
+                (atom_1, atom_2),
+                key=lambda atom: atom['id'],
+            ),
+        )
 
-    def has_already_added(atom_pair: Tuple[Atom, Atom]) -> bool:
-        return (atom_pair in connected_sp2_carbons) or (atom_pair[::-1] in connected_sp2_carbons)
-
-    for atom in list(atoms.values()):
-        if is_sp2_carbon_atom(atom) and is_bonded_to_sp2_carbon(atom, atoms):
-            bonded_sp2_carbon_atoms = get_connected_sp2_carbon_atoms(atom, atoms)
-            for atom2 in bonded_sp2_carbon_atoms:
-                doubleBondPair = (atom, atom2)
-                if not has_already_added(doubleBondPair):
-                    connected_sp2_carbons.append(doubleBondPair)
+    pairs = list(
+        reduce(
+            lambda acc, e: acc + e,
+            [
+                [canonise_pair(sp2_atom_1, sp2_atom_2) for sp2_atom_2 in get_connected_sp2_carbon_atoms_of_greater_id(sp2_atom_1, atoms)]
+                for sp2_atom_1 in atoms.values()
+                if is_sp2_carbon_atom(sp2_atom_1)
+            ],
+            [],
+        )
+    )
     if log:
-        log.debug("Found the following sp2 carbon atoms in a double bond: {0}".format(" ".join(["{0}=={1}".format(a1["symbol"], a2["symbol"]) for a1, a2 in connected_sp2_carbons ])))
+        log.debug(
+            "Found the following sp2 carbon atoms in a double bond: {0}".format(
+                " ".join(
+                    [
+                        "{0}=={1}".format(a1["symbol"], a2["symbol"])
+                        for (a1, a2) in pairs
+                    ],
+                ),
+            ),
+        )
 
-    return connected_sp2_carbons
+    return pairs
 
-def get_connected_sp2_carbon_atoms(atom: Atom, atoms: List[Atom]) -> List[Atom]:
+def get_connected_sp2_carbon_atoms_of_greater_id(atom: Atom, atoms: Dict[int, Atom]) -> List[Atom]:
     return list(
         filter(
-            lambda bonded_atom: is_sp2_carbon_atom(bonded_atom) and has_suitable_double_bond_length(atom, bonded_atom),
+            lambda bonded_atom: is_sp2_carbon_atom(bonded_atom) and has_suitable_double_bond_length(atom, bonded_atom) and atom['id'] < bonded_atom['id'],
             [
                 atoms[bonded_atom_id]
                 for bonded_atom_id in atom["conn"]

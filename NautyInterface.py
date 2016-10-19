@@ -93,7 +93,6 @@ class NautyInterface(object):
     def nauty_node_partition(self) -> str:
         # atom_types is a dictionnary where keys are iacm or element type (ex:12 for C) and values are a list of matching atom indexes. 
         # Ex: {'12': [2, 4, 7, 10, 13, 16], '20': [1, 3, 5, 6, 8, 9, 11, 12, 14, 15, 17, 18]}
-        atom_types = {}
 
         def atom_descriptor_key_for(atom: Dict[str, Any]) -> str:
             return 'iacm' if 'iacm' in atom else 'type'
@@ -109,12 +108,6 @@ class NautyInterface(object):
                 return base_atom_descriptor
 
         # Accumulate atom indexes
-        for atom in list(self.data.atoms.values()):
-            atom_types.setdefault(
-                atom_descriptor_for(atom),
-                [],
-            ).append(atom['index'])
-
         atom_types = dict(
             [
                 # Shift atom indexes by one to match dreadnaut's convention (starts at 0)
