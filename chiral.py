@@ -1,14 +1,25 @@
+from typing import List, Any, Dict
+from logging import Logger
 
-MINIMUM_NEIGHBOUR_COUNT_FOR_CHIRAL = 4 
+from chemical_equivalence.helpers.types import Atom
+from chemical_equivalence.helpers.atoms import is_sp3_atom
+from chemical_equivalence.NautyInterface import NO_EQUIVALENCE_VALUE
+
+MINIMUM_NEIGHBOUR_COUNT_FOR_CHIRAL = 4
 MINIMUM_IDENTICAL_NEIGHBOUR_COUNT_FOR_CHIRAL = 2
 
-def getNeighboursEquivalenceGroups(atom, molData):
+def getNeighboursEquivalenceGroups(atom: Atom, molData: Any) -> Dict[int, str]:
+    '''Return dictionary of: id's -> equivalence groups'''
     # Get back the equivalence groups of the neighbours and their id's
-    listIDEq = [(neighbour, molData.atoms[neighbour]["equivalenceGroup"]) for neighbour in atom["conn"] if molData.atoms[neighbour]["equivalenceGroup"] != -1 ]
-    # return dictionary of: id's -> equivalence groups
-    return dict(listIDEq) 
+    return dict(
+        [
+            (neighbour, molData.atoms[neighbour]["equivalenceGroup"])
+            for neighbour in atom["conn"]
+            if molData.atoms[neighbour]["equivalenceGroup"] != NO_EQUIVALENCE_VALUE
+        ]
+    )
 
-def hasStereogenicAtom(molData, log):
+def hasStereogenicAtom(molData: Any, log: Logger) -> bool:
     hasCenter = False
     for atom in list(molData.atoms.values()):
         if isSterogenicAtom(atom, molData):
@@ -16,25 +27,32 @@ def hasStereogenicAtom(molData, log):
             if log: log.debug("Stereogenic atom: {0}".format(atom["symbol"]))
     return hasCenter
 
-def isSterogenicAtom(atom, molData):
-    return has4ConnectingGroups(atom) and hasAllDifferentNeighbours(atom, molData)
+def isSterogenicAtom(atom: Atom, molData: Any) -> bool:
+    return is_sp3_atom(atom) and hasAllDifferentNeighbours(atom, molData)
 
-def hasAllDifferentNeighbours(atom, molData):
+def hasAllDifferentNeighbours(atom: Atom, molData: Any) -> bool:
     # Get the equivalence groups of the neighbours
     neighbours_equivalence_groups = getNeighboursEquivalenceGroups(atom, molData)
 
     # remove case where atoms are not in any equivalence group
-    neighbours_equivalence_groups_filtered = dict([x for x in list(neighbours_equivalence_groups.items()) if x[1] != -1])
+    neighbours_equivalence_groups_filtered = dict(
+        [
+            x
+            for x in neighbours_equivalence_groups.items()
+            if x[1] != NO_EQUIVALENCE_VALUE
+        ]
+    )
 
     # check if all atoms are in different equivalence groups
-    return all([count == 1 for _, count in list(countValueGroups(neighbours_equivalence_groups_filtered).items())])
+    return all(
+        [
+            count == 1
+            for (_, count) in
+            countValueGroups(neighbours_equivalence_groups_filtered).items()
+        ]
+    )
 
-
-def has4ConnectingGroups(atom):
-    # is possibly steriogenic if atom has at least four neighbours
-    return len(atom['conn']) == 4
-
-def hasStereoheterotopicNeighbours(neighbours_equivalence_groups, log):
+def hasStereoheterotopicNeighbours(neighbours_equivalence_groups: Any, log: Logger) -> bool:
     '''For molecules that have at least one stereogenic atom, then any neighbour group that has
      two, and only two, chemically equivalent atoms is distereotopic. In the case where two pairs 
     of neighbours are chemically equivalent, then they are only stereoheterotopic if the chiral configurations
@@ -58,18 +76,24 @@ def hasStereoheterotopicNeighbours(neighbours_equivalence_groups, log):
     else:
         return False
 
-def getStereoheterotopicAtomGroups(neighbours_equivalence_groups):
+def getStereoheterotopicAtomGroups(neighbours_equivalence_groups: Any) -> List[Any]:
     atomGroups = []
     for equivGrpID, occurence in list(countValueGroups(neighbours_equivalence_groups).items()):
         # If there are exactly two equivalent neighbours bonded to the 'atm' atom 
         if occurence == MINIMUM_IDENTICAL_NEIGHBOUR_COUNT_FOR_CHIRAL:
-            atomGroups.append( [atomID for atomID, grpID in list(neighbours_equivalence_groups.items()) if equivGrpID==grpID] )
+            atomGroups.append(
+                [
+                    atomID
+                    for (atomID, grpID) in neighbours_equivalence_groups.items()
+                    if equivGrpID == grpID
+                ]
+            )
     return atomGroups
 
-def containsStereoheterotopicAtoms(molData, flavourCounter, log):
+def containsStereoheterotopicAtoms(molData: Any, flavourCounter: Any, log: Logger) -> bool:
     should_rerun = False
 
-    if not hasStereogenicAtom(molData, log): 
+    if not hasStereogenicAtom(molData, log):
         return should_rerun
 
     if log: log.debug("HAS AT LEAST ONE STEREOGENIC ATOM. NOW LOOKING FOR STEREOHETEROTOPIC ATOMS.")
@@ -90,7 +114,7 @@ def containsStereoheterotopicAtoms(molData, flavourCounter, log):
     return should_rerun
 
 # Counts the occurence of a dictionnary's keys
-def countValueGroups(dictionary):
+def countValueGroups(dictionary: Dict[Any, Any]) -> Dict[Any, int]:
     retDict = {}
     for v in list(dictionary.values()):
         retDict.setdefault(v, 0)

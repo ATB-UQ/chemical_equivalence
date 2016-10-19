@@ -5,9 +5,12 @@ from itertools import groupby
 
 NAUTY_EXECUTABLE = '/usr/local/bin/dreadnaut'
 
-minus_one = lambda x: (x - 1)
+atb_to_nauty = lambda x: (x - 1)
+nauty_to_atb = lambda x: (x + 1)
 
 LARGE_NUMBER = 1000
+
+NO_EQUIVALENCE_VALUE = -1
 
 class NautyInterface(object):
     def __init__(self, molData: Any) -> None:
@@ -59,7 +62,7 @@ class NautyInterface(object):
 
             # append sym group and shift indexes up by 1
             if len(expandedEqGroup) > 1:
-                self.data.equivalenceGroups[len(self.data.equivalenceGroups)] = [x+1 for x in expandedEqGroup]
+                self.data.equivalenceGroups[len(self.data.equivalenceGroups)] = [nauty_to_atb(x) for x in expandedEqGroup]
 
         for atmID, atm in list(self.data.atoms.items()):
             found = False
@@ -69,7 +72,7 @@ class NautyInterface(object):
                     found = True
                     break
             if not found:
-                self.data.atoms[atmID]["equivalenceGroup"] = -1
+                self.data.atoms[atmID]["equivalenceGroup"] = NO_EQUIVALENCE_VALUE
         return None
 
 
@@ -83,7 +86,7 @@ class NautyInterface(object):
     def nauty_edges(self) -> str:
         return ''.join(
             [
-                "{0}:{1};".format(*[minus_one(index) for index in bond['atoms']])
+                "{0}:{1};".format(*[atb_to_nauty(index) for index in bond['atoms']])
                 for bond in self.data.bonds
             ]
         )
@@ -116,7 +119,7 @@ class NautyInterface(object):
         atom_types = dict(
             [
                 # Shift atom indexes by one to match dreadnaut's convention (starts at 0)
-                (group_key, [minus_one(atom['index']) for atom in group_iterator])
+                (group_key, [atb_to_nauty(atom['index']) for atom in group_iterator])
                 for (group_key, group_iterator) in groupby(
                     self.data.atoms.values(),
                     key=atom_descriptor_for,
