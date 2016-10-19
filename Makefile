@@ -1,6 +1,7 @@
-test:
-	python chemical_equivalency_tests.py
-.PHONY : test
+PYTHON_BIN_DIR = /usr/local/python35/bin
 
-python:
-	python calcChemEquivalency.py
+PYTHON_EXEC = PYTHONPATH=$(PYTHONPATH) $(PYTHON_BIN_DIR)/python3
+
+test:
+	$(PYTHON_EXEC) test.py
+.PHONY : test

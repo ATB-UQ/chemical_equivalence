@@ -98,29 +98,3 @@ def parseCommandline():
     # Run symmetrization
     nautyInterface.calcSym()
     print(nautyInterface.data.equivalenceGroups)
-
-if __name__=="__main__":
-    logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - [%(levelname)s] - %(message)s  -->  (%(module)s.%(funcName)s: %(lineno)d)', datefmt='%d-%m-%Y %H:%M:%S')
-    #parseCommandline()
-    #data = MolData(open("testing/stressTest.pdb").read(), open("testing/stressTest.mtb").read())
-    #data = MolData(open("testing/benzene.pdb").read())
-    #data = MolData(open("testing/cyclohexane.pdb").read())
-    data = MolData(open("testing/decalin.pdb").read(), logging.getLogger())
-    #data = MolData(open("testing/1,1-dichlorocyclohexane.pdb").read(), open("testing/1,1-dichlorocyclohexane.mtb").read())
-    #data = MolData(open("testing/cyclohexane.pdb").read(), open("testing/cyclohexane.mtb").read())
-    #data = MolData(open("testing/chlorocyclohexane.pdb").read(), open("testing/chlorocyclohexane.mtb").read())
-    #data = MolData(open("testing/1,1-dichlorocyclohexane.pdb").read(), open("testing/1,1-dichlorocyclohexane.mtb").read())
-    #data = MolData(open("testing/cyclohexane.pdb").read(), open("testing/cyclohexane.mtb").read())
-    #data = MolData(open("testing/chlorocyclohexane.pdb").read(), open("testing/chlorocyclohexane.mtb").read())
-    #data = MolData(open("testing/decalin.pdb").read(), open("testing/decalin.mtb").read())
-    #data = MolData(open("testing/cyclobutadiene.pdb").read(), open("testing/cyclobutadiene.mtb").read())
-    #data = MolData(open("testing/(1S,4S)-1,4-dibromo-1,4-dichloro-2,2,3,3-tetramethylbutane.pdb").read(), open("testing/(1S,4S)-1,4-dibromo-1,4-dichloro-2,2,3,3-tetramethylbutane.mtb").read())
-
-    #data = MolData(open("testing/dichloro-dibromobutane.pdb").read(), open("testing/dichloro-dibromobutane.mtb").read())
-    #data = MolData(open("testing/(1S,3S)-1,3-dibromo-1,3-dichloropropane.pdb").read(), open("testing/(1S,3S)-1,3-dibromo-1,3-dichloropropane.mtb").read())
-    #data = MolData(open("testing/(1R,3S)-1,3-dibromo-1,3-dichloropropane.pdb").read(), open("testing/(1R,3S)-1,3-dibromo-1,3-dichloropropane.mtb").read())
-
-    print("Rings: {0}".format( data.rings ))
-    getChemEquivGroups(data, log=logging.getLogger())
-    print(list(data.equivalenceGroups.values()))
-    print("\n".join([str((at["index"], at["equivalenceGroup"])) for at in list(data.atoms.values())]))

@@ -144,3 +144,6 @@ def _run(args: List[str], stdin: str, log: Optional[Any] = None) -> str:
     if stderr and log:
         log.debug(stderr)
     return stdout.strip().decode()
+
+if __name__ == '__main__':
+    pass
