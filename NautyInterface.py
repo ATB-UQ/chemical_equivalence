@@ -1,36 +1,48 @@
 import subprocess
 import tempfile
+from typing import Union, Any, Optional, List, Dict
+from itertools import groupby
+
+NAUTY_EXECUTABLE = '/usr/local/bin/dreadnaut'
+
+minus_one = lambda x: (x - 1)
+
+LARGE_NUMBER = 1000
 
 class NautyInterface(object):
-
-    def __init__(self, molData):
+    def __init__(self, molData: Any) -> None:
         self.data = molData
 
-    def calcEquivGroups(self, log=None):
+    def calcEquivGroups(self, log: Optional[Any] = None) -> Union[str, None]:
         if log: log.debug("Running Nauty")
-        nautyInput = self._writeNautyInput()
 
-        args = ["/usr/local/bin/dreadnaut"]
-        nautyStdout = _run(args, nautyInput, errorLog=log)
+        nauty_stdout = _run(
+            [NAUTY_EXECUTABLE],
+            self.nauty_input(),
+            log=log,
+        )
 
-        if len(nautyStdout) == 0:
+        if len(nauty_stdout) == 0:
             if log is not None:
                 log.warning("calcEquivGroups: dreadnaut produced no output")
             return ""
-        self._procNautyOutput(nautyStdout)
 
-        if log: 
+        self._procNautyOutput(nauty_stdout)
+
+        if log:
             log.debug("Equivalence groups: {0}".format(self._getLogInfo()))
 
-    def _getLogInfo(self):
+        return None
+
+    def _getLogInfo(self) -> str:
         output = ""
         for grpID, atomsIndexs in list(self.data.equivalenceGroups.items()):
             atmNames = [self.data[self.data.get_id(i)]["symbol"] for i in atomsIndexs]
             output += "\n{0}: {1}".format(str(grpID), " ".join(atmNames))
         return output
 
-    def _procNautyOutput(self, nautyStdout):
-        orbitalData = nautyStdout.split("seconds")[-1].strip()
+    def _procNautyOutput(self, nauty_stdout: str) -> None:
+        orbitalData = nauty_stdout.split("seconds")[-1].strip()
 
         # last item in each group is the number of nodes and not needed 
         eqGroups = [grp.split()[:-1] for grp in orbitalData.split(";") if grp] 
@@ -58,46 +70,69 @@ class NautyInterface(object):
                     break
             if not found:
                 self.data.atoms[atmID]["equivalenceGroup"] = -1
-        return
+        return None
 
 
-    def _writeNautyInput(self):
-        return  'n={numAtoms} g {nautyGraph}.'\
-                'f=[{partition}] xo'.format(**{"numAtoms":len(self.data.atoms),
-                                             "nautyGraph":self.genNautyGraph(),
-                                             "partition":self.genNautyPartition()}
-                                          )
+    def nauty_input(self) -> str:
+        return  'n={num_atoms} g {edges}.f=[{node_partition}] xo'.format(
+            num_atoms=len(self.data.atoms),
+            edges=self.nauty_edges(),
+            node_partition=self.nauty_node_partition(),
+        )
 
-    def genNautyGraph(self):
-        graphStr = ""
-        for bond in self.data.bonds:
-            graphStr += "{0}:{1};".format(*[x-1 for x in bond['atoms']])
-        return graphStr
+    def nauty_edges(self) -> str:
+        return ''.join(
+            [
+                "{0}:{1};".format(*[minus_one(index) for index in bond['atoms']])
+                for bond in self.data.bonds
+            ]
+        )
 
-    def genNautyPartition(self):
-        # atomTypes is a dictionnary where keys are iacm or element type (ex:12 for C) and values are a list of matching atom indexes. 
+    def nauty_node_partition(self) -> str:
+        # atom_types is a dictionnary where keys are iacm or element type (ex:12 for C) and values are a list of matching atom indexes. 
         # Ex: {'12': [2, 4, 7, 10, 13, 16], '20': [1, 3, 5, 6, 8, 9, 11, 12, 14, 15, 17, 18]}
-        atomTypes = {}
+        atom_types = {}
+
+        def atom_descriptor_key_for(atom: Dict[str, Any]) -> str:
+            return 'iacm' if 'iacm' in atom else 'type'
+
+        def atom_descriptor_for(atom: Dict[str, Any]) -> str:
+            base_atom_descriptor = atom[atom_descriptor_key_for(atom)]
+
+            if "flavour" in atom:
+                # Append flavour to the atom descriptor in order to distinguish between stereoheterotopic atoms.
+                # LARGE_NUMBER is chosen as a large number that is much greater than the 80 existing atom types
+                return ''.join([base_atom_descriptor, str(LARGE_NUMBER + atom["flavour"])])
+            else:
+                return base_atom_descriptor
 
         # Accumulate atom indexes
-        for atm in list(self.data.atoms.values()):
-            atom_class_identifier = 'iacm' if 'iacm' in atm else 'type'
-            if "flavour" in atm:
-                # append flavour to atom_class_identifier in order to distinguish between stereoheterotopic atoms,
-                # the 1000 is chosen as a large number that is much greater than the 80 existing atom types
-                distinguishingID = 1000+atm["flavour"]
-                atomTypes.setdefault("{0}{1}".format(atm[atom_class_identifier], distinguishingID), []).append(atm['index'])
-            else:
-                atomTypes.setdefault(atm[atom_class_identifier],[]).append(atm['index'])
+        for atom in list(self.data.atoms.values()):
+            atom_types.setdefault(
+                atom_descriptor_for(atom),
+                [],
+            ).append(atom['index'])
 
-        # Shift atom indexes by one to match dreadnaut's convention (starts at 0)
-        for atomType in list(atomTypes.keys()):
-            atomTypes[atomType] = [x-1 for x in atomTypes[atomType]]
+        atom_types = dict(
+            [
+                # Shift atom indexes by one to match dreadnaut's convention (starts at 0)
+                (group_key, [minus_one(atom['index']) for atom in group_iterator])
+                for (group_key, group_iterator) in groupby(
+                    self.data.atoms.values(),
+                    key=atom_descriptor_for,
+                )
+            ]
+        )
 
-        # Format it in dreadnaut's partition format. Ex: 1,2,3|4,5,6
-        return '|'.join( [ ','.join( map(str,v) ) for v in list(atomTypes.values()) ] )
+        # Format it in dreadnaut's partition format. Ex: "1,2,3|4,5,6"
+        return '|'.join(
+            [
+                ','.join(map(str, indices))
+                for (_, indices) in sorted(atom_types.items())
+            ]
+        )
 
-def _run(args, stdin, errorLog=None):
+def _run(args: List[str], stdin: str, log: Optional[Any] = None) -> str:
     tmp = tempfile.TemporaryFile(buffering=0)
     tmp.write(stdin.encode())
     tmp.seek(0)
@@ -106,6 +141,6 @@ def _run(args, stdin, errorLog=None):
     stdout, stderr = proc.communicate()
 
     tmp.close()
-    if stderr and errorLog:
-        errorLog.debug(stderr)
+    if stderr and log:
+        log.debug(stderr)
     return stdout.strip().decode()
