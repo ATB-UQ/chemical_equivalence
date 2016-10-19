@@ -2,6 +2,7 @@ from copy import deepcopy
 from math import sqrt
 
 from chemical_equivalence.utilities.dijkstra import shortestPath
+
 ACCEPTED_PLANAR_VALENCE_PER_ATOM_TYPE = {
     'C': [3],
     'N': [2, 3], # For pyridine
