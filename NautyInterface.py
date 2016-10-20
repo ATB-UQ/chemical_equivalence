@@ -3,6 +3,8 @@ import tempfile
 from typing import Union, Any, Optional, List, Dict
 from itertools import groupby
 
+from chemical_equivalence.helpers.types import Logger
+
 NAUTY_EXECUTABLE = '/usr/local/bin/dreadnaut'
 
 atb_to_nauty = lambda x: (x - 1)
@@ -21,7 +23,7 @@ class NautyInterface(object):
 
         nauty_stdout = _run(
             [NAUTY_EXECUTABLE],
-            self.nauty_input(),
+            self.nauty_input(log=log),
             log=log,
         )
 
@@ -75,12 +77,17 @@ class NautyInterface(object):
                 self.data.atoms[atmID]["equivalenceGroup"] = NO_EQUIVALENCE_VALUE
         return None
 
-    def nauty_input(self) -> str:
-        return  'n={num_atoms} g {edges}.f=[{node_partition}] xo'.format(
+    def nauty_input(self, log: Optional[Logger] = None) -> str:
+        input_str = 'n={num_atoms} g {edges}.f=[{node_partition}] xo'.format(
             num_atoms=len(self.data.atoms),
             edges=self.nauty_edges(),
             node_partition=self.nauty_node_partition(),
         )
+
+        if log:
+            log.debug('Nauty input: {0}'.format(input_str))
+
+        return input_str
 
     def nauty_edges(self) -> str:
         return ''.join(
