@@ -10,7 +10,7 @@ from atb_outputs.formats import graph
 TESTING_DIR = 'testing'
 
 def run_tests():
-    test_pdb_files = [filepath for filepath in glob(join(TESTING_DIR, '*.pdb'))]
+    test_pdb_files = [filepath for filepath in sorted(glob(join(TESTING_DIR, '*.pdb')))]
 
     for test_pdb_file in test_pdb_files:
         mol_data = MolData(
@@ -18,10 +18,12 @@ def run_tests():
             log=getLogger(),
         )
 
+        print('Running test for pdb file: {0}'.format(test_pdb_file))
         print("Rings: {0}".format(mol_data.rings))
         getChemEquivGroups(mol_data, log=getLogger())
         print(list(mol_data.equivalenceGroups.values()))
         print("\n".join([str((atom["index"], atom["equivalenceGroup"])) for atom in list(mol_data.atoms.values())]))
+        print()
 
         for (graph_format, graph_data) in graph(mol_data):
             with open(test_pdb_file.replace('.pdb', '.' + graph_format), 'w' + ('b' if isinstance(graph_data, bytes) else 't')) as fh:
