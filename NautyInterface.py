@@ -14,8 +14,6 @@ nauty_to_atb = lambda x: (x + 1)
 
 LARGE_NUMBER = 1000
 
-NO_EQUIVALENCE_VALUE = -1
-
 class NautyInterface(object):
     def __init__(self, molData: Any) -> None:
         self.data = molData

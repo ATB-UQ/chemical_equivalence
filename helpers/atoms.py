@@ -2,7 +2,6 @@ from typing import List, Any
 from math import sqrt
 
 from chemical_equivalence.helpers.types import Atom
-from chemical_equivalence.NautyInterface import NO_EQUIVALENCE_VALUE
 
 EQUIVALENCE_CLASS_KEY = 'equivalenceGroup'
 
@@ -53,15 +52,15 @@ def atom_distance(atom1: Atom, atom2: Atom) -> float:
 def is_sterogenic_atom(atom: Atom, molData: Any) -> bool:
     return is_sp3_atom(atom) and has_all_different_neighbours(atom, molData.atoms.values())
 
-def has_all_different_neighbours(atom: Atom, atoms: List[Atom]) -> bool:
-    neighbour_equivalences = list(
-        filter(
-            lambda equivalence_class: equivalence_class != NO_EQUIVALENCE_VALUE,
-            [
-                neighbour_atom[EQUIVALENCE_CLASS_KEY]
-                for neighbour_atom in neighbouring_atoms(atom, atoms)
-            ],
-        ),
-    )
+def are_substituents(atom_1: Atom, atom_2: Atom) -> bool:
+    return set(atom_1['conn']) & set(atom_2['conn']) != set()
 
-    return len(set(neighbour_equivalences)) == len(neighbour_equivalences)
+def neighbour_equivalence_classes(atom: Atom, atoms: List[Atom]) -> List[int]:
+    return [
+        neighbour_atom[EQUIVALENCE_CLASS_KEY]
+        for neighbour_atom in neighbouring_atoms(atom, atoms)
+    ]
+
+def has_all_different_neighbours(atom: Atom, atoms: List[Atom]) -> bool:
+    all_equivalence_classes = neighbour_equivalence_classes(atom, atoms)
+    return len(set(all_equivalence_classes)) == len(all_equivalence_classes)

@@ -24,7 +24,7 @@ def run_tests(log: Optional[Logger], correct_symmetry: bool = True) -> None:
 
         print('Running test for pdb file: {0}'.format(test_pdb_file), file=stdout)
         print("Rings: {0}".format(mol_data.rings), file=stdout)
-        getChemEquivGroups(mol_data, log=log)
+        getChemEquivGroups(mol_data, log=log, correct_symmetry=correct_symmetry)
         print(list(mol_data.equivalenceGroups.values()), file=stdout)
         print("\n".join([str((atom["index"], atom[EQUIVALENCE_CLASS_KEY])) for atom in list(mol_data.atoms.values())]), file=stdout)
         print('', file=stdout)

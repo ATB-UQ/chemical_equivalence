@@ -1,4 +1,4 @@
-from typing import Any, Dict, Callable, Optional
+from typing import Any, Dict, Callable, Optional, Tuple
 from logging import Logger
 
 from chemical_equivalence.molData import MolData
