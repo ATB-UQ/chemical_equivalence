@@ -7,6 +7,7 @@ vimdiff: refactor.log
 
 refactor.log:
 	make test > $@
+.PHONY: refactor.log
 
 test:
 	$(PYTHON_EXEC) test.py
