@@ -2,6 +2,12 @@ PYTHON_BIN_DIR = /usr/local/python35/bin
 
 PYTHON_EXEC = PYTHONPATH=$(PYTHONPATH) $(PYTHON_BIN_DIR)/python3
 
+vimdiff: refactor.log
+	vimdiff reference.log $<
+
+refactor.log:
+	make test > $@
+
 test:
 	$(PYTHON_EXEC) test.py
 .PHONY : test
@@ -14,5 +20,3 @@ mypy: $(PYTHON_BIN_DIR)/mypy
 	MYPYPATH=$(PYTHONPATH) $(PYTHON_BIN_DIR)/mypy calcChemEquivalency.py
 .PHONY: mypy
 
-vimdiff:
-	vimdiff reference.log refactor.log
