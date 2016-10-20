@@ -118,9 +118,10 @@ class NautyInterface(object):
         atom_types = dict(
             [
                 # Shift atom indexes by one to match dreadnaut's convention (starts at 0)
+                # Atoms are sorted by key=atom_descriptor_for for canonical flovouring of the nauty nodes
                 (group_key, [atb_to_nauty(atom['index']) for atom in group_iterator])
                 for (group_key, group_iterator) in groupby(
-                    self.data.atoms.values(),
+                    sorted(self.data.atoms.values(), key=atom_descriptor_for),
                     key=atom_descriptor_for,
                 )
             ]
