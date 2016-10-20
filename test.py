@@ -1,6 +1,7 @@
 from glob import glob
 from os.path import basename, join
-from logging import basicConfig, getLogger, DEBUG
+from logging import basicConfig, getLogger, DEBUG, StreamHandler, Formatter
+from sys import stdout
 
 from chemical_equivalence.molData import MolData
 from chemical_equivalence.calcChemEquivalency import getChemEquivGroups
@@ -9,18 +10,18 @@ from atb_outputs.formats import graph
 
 TESTING_DIR = 'testing'
 
-def run_tests():
+def run_tests(log):
     test_pdb_files = [filepath for filepath in sorted(glob(join(TESTING_DIR, '*.pdb')))]
 
     for test_pdb_file in test_pdb_files:
         mol_data = MolData(
             open(test_pdb_file).read(),
-            log=getLogger(),
+            log=log,
         )
 
         print('Running test for pdb file: {0}'.format(test_pdb_file))
         print("Rings: {0}".format(mol_data.rings))
-        getChemEquivGroups(mol_data, log=getLogger())
+        getChemEquivGroups(mol_data, log=log)
         print(list(mol_data.equivalenceGroups.values()))
         print("\n".join([str((atom["index"], atom["equivalenceGroup"])) for atom in list(mol_data.atoms.values())]))
         print()
@@ -30,9 +31,15 @@ def run_tests():
                 fh.write(graph_data)
 
 if __name__=="__main__":
-    basicConfig(
-        level=DEBUG,
-        format='[%(levelname)s] - %(message)s',
-        datefmt='%d-%m-%Y %H:%M:%S',
-    )
-    run_tests()
+    log = getLogger()
+    log.setLevel(DEBUG)
+
+    formatter = Formatter('[%(levelname)s] - %(message)s')
+
+    ch = StreamHandler(stdout)
+    ch.setLevel(DEBUG)
+
+    ch.setFormatter(formatter)
+    log.addHandler(ch)
+
+    run_tests(log)
