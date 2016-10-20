@@ -33,7 +33,7 @@ class NautyInterface(object):
                 log.warning("calcEquivGroups: dreadnaut produced no output")
             return ""
 
-        equivalence_for_atom = self.nauty_equivalence(nauty_stdout, log=log)
+        equivalence_for_atom = self.nauty_equivalence(nauty_stdout)
         for atom_id in self.data.atoms.keys():
             self.data.atoms[atom_id]["equivalenceGroup"] = equivalence_for_atom[atom_id]
 
@@ -51,10 +51,7 @@ class NautyInterface(object):
             for equivalence_class in sorted(set(equivalence_dict.values()))
         )
 
-    def nauty_equivalence(self, nauty_stdout: str, log: Optional[Logger] = None) -> Dict[int, int]:
-        if log:
-            log.debug('Nauty stdout: {0}'.format(nauty_stdout))
-
+    def nauty_equivalence(self, nauty_stdout: str) -> Dict[int, int]:
         orbital_data = nauty_stdout.split("seconds")[-1].strip()
 
         def eval_group_field(group_field: str) -> List[int]:
