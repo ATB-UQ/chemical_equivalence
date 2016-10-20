@@ -9,9 +9,12 @@ from chemical_equivalence.calcChemEquivalency import getChemEquivGroups
 from chemical_equivalence.helpers.types import Logger, Optional
 from chemical_equivalence.helpers.atoms import EQUIVALENCE_CLASS_KEY
 
-from atb_outputs.formats import graph
+from atb_outputs.graph import graph_img
 
 TESTING_DIR = 'testing'
+
+CACHE_GRAPH_POS = True
+graph_for_test = {}
 
 def run_tests(log: Optional[Logger], correct_symmetry: bool = True) -> None:
     test_pdb_files = [filepath for filepath in sorted(glob(join(TESTING_DIR, '*.pdb')))]
@@ -29,19 +32,27 @@ def run_tests(log: Optional[Logger], correct_symmetry: bool = True) -> None:
         print("\n".join([str((atom["index"], atom[EQUIVALENCE_CLASS_KEY])) for atom in list(mol_data.atoms.values())]), file=stdout)
         print('', file=stdout)
 
-        for (graph_format, graph_data) in graph(mol_data):
-            if graph_format == 'svg':
-                with open(test_pdb_file.replace('.pdb', '_' + ('not_' if not correct_symmetry else '') + 'corrected' + '.' + graph_format), 'w' + ('b' if isinstance(graph_data, bytes) else 't')) as fh:
-                    fh.write(graph_data)
-            else:
-                pass
+        molecule_graph, pos = graph_for_test[test_pdb_file] if (test_pdb_file in graph_for_test and CACHE_GRAPH_POS) else (None, None)
+
+        graph_data, molecule_graph, pos = graph_img(
+            mol_data,
+            return_pos=True,
+            pos=pos,
+            molecule_graph=None,
+        )
+
+        if test_pdb_file not in graph_for_test:
+            graph_for_test[test_pdb_file] = (molecule_graph, pos)
+
+        with open(test_pdb_file.replace('.pdb', '_' + ('not_' if not correct_symmetry else '') + 'corrected' + '.' + 'svg'), 'w' + ('b' if isinstance(graph_data, bytes) else 't')) as fh:
+            fh.write(graph_data)
 
 if __name__=="__main__":
     log = getLogger()
     log.setLevel(DEBUG)
 
     formatter = Formatter('[%(levelname)s] - %(message)s')
-    for should_correct_symmetry in [True]:
+    for should_correct_symmetry in [True, False]:
         if should_correct_symmetry:
             pass
         else:
