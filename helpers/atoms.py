@@ -53,7 +53,7 @@ def is_sterogenic_atom(atom: Atom, molData: Any) -> bool:
     return is_sp3_atom(atom) and has_all_different_neighbours(atom, molData.atoms.values())
 
 def are_substituents(atom_1: Atom, atom_2: Atom) -> bool:
-    return set(atom_1['conn']) & set(atom_2['conn']) != set()
+    return (set(atom_1['conn']) & set(atom_2['conn'])) != set()
 
 def neighbour_equivalence_classes(atom: Atom, atoms: List[Atom]) -> List[int]:
     return [

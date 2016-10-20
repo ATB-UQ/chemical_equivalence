@@ -2,10 +2,10 @@ import subprocess
 import tempfile
 from typing import Union, Any, Optional, List, Dict
 from itertools import groupby
-from functools import reduce
 
 from chemical_equivalence.helpers.types import Logger
 from chemical_equivalence.helpers.atoms import EQUIVALENCE_CLASS_KEY
+from chemical_equivalence.helpers.iterables import concat
 
 NAUTY_EXECUTABLE = '/usr/local/bin/dreadnaut'
 
@@ -143,13 +143,6 @@ class NautyInterface(object):
                 for (_, indices) in sorted(atom_types.items())
             ]
         )
-
-def concat(list_of_lists: List[List[Any]]) -> List[Any]:
-    return reduce(
-        lambda acc, e: acc + e,
-        list_of_lists,
-        [],
-    )
 
 def _run(args: List[str], stdin: str, log: Optional[Any] = None) -> str:
     tmp = tempfile.TemporaryFile(buffering=0)

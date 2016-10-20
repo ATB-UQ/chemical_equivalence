@@ -41,7 +41,7 @@ if __name__=="__main__":
     log.setLevel(DEBUG)
 
     formatter = Formatter('[%(levelname)s] - %(message)s')
-    for should_correct_symmetry in [True, False]:
+    for should_correct_symmetry in [True]:
         if should_correct_symmetry:
             pass
         else:
