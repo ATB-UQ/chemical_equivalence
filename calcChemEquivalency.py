@@ -15,21 +15,23 @@ EXCEPTION_SEARCHING_FUNCTIONS = [
     contains_inversable_rings,
 ]
 
-def getChemEquivGroups(molData: MolData, log: Optional[Logger] = None):
+def getChemEquivGroups(molData: MolData, log: Optional[Logger] = None, correct_symmetry: bool = True):
     # for cases with stereogenic centers we need to add flavour (some additional degree of freedom)
     # to distinguish stereoheterotopic atoms
     nautyInterface = NautyInterface(molData)
 
     nautyInterface.calcEquivGroups(log)
 
-    flavourCounter = FlavourCounter()
-    if chemicalEquivalenceExceptions(molData, flavourCounter, log):
-        clearEqGroupData(molData)
-        nautyInterface.calcEquivGroups(log)
+    if correct_symmetry:
+        flavourCounter = FlavourCounter()
+        should_rerun = chemicalEquivalenceExceptions(molData, flavourCounter, log)
+        if should_rerun:
+            clearEqGroupData(molData)
+            nautyInterface.calcEquivGroups(log)
 
     return molData.equivalenceGroups
 
-def chemicalEquivalenceExceptions(molData: MolData, flavourCounter: FlavourCounter, log: Logger, exception_searching_functions: List[Exception_Searching_Function] = EXCEPTION_SEARCHING_FUNCTIONS):
+def chemicalEquivalenceExceptions(molData: MolData, flavourCounter: FlavourCounter, log: Logger, exception_searching_functions: List[Exception_Searching_Function] = EXCEPTION_SEARCHING_FUNCTIONS) -> bool:
     # If there is a chemical equivalence breaking groups then should_rerun = True
     should_rerun = any(
         [
