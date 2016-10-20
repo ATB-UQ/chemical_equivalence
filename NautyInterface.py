@@ -2,6 +2,7 @@ import subprocess
 import tempfile
 from typing import Union, Any, Optional, List, Dict
 from itertools import groupby
+from functools import reduce
 
 from chemical_equivalence.helpers.types import Logger
 
@@ -32,50 +33,62 @@ class NautyInterface(object):
                 log.warning("calcEquivGroups: dreadnaut produced no output")
             return ""
 
-        self._procNautyOutput(nauty_stdout)
+        equivalence_for_atom = self.nauty_equivalence(nauty_stdout, log=log)
+        for atom_id in self.data.atoms.keys():
+            self.data.atoms[atom_id]["equivalenceGroup"] = equivalence_for_atom[atom_id]
 
         if log:
-            log.debug("Equivalence groups: {0}".format(self._getLogInfo()))
+            log.debug("Equivalence groups:\n{0}".format(self._getLogInfo(equivalence_for_atom)))
 
         return None
 
-    def _getLogInfo(self) -> str:
-        output = ""
-        for grpID, atomsIndexs in list(self.data.equivalenceGroups.items()):
-            atmNames = [self.data[self.data.get_id(i)]["symbol"] for i in atomsIndexs]
-            output += "\n{0}: {1}".format(str(grpID), " ".join(atmNames))
-        return output
+    def _getLogInfo(self, equivalence_dict: Dict[int, int]) -> str:
+        return '\n'.join(
+            "{equivalence_class}: {atoms}".format(
+                equivalence_class=equivalence_class,
+                atoms = ' '.join([atom['symbol'] for atom in self.data.atoms.values() if atom['equivalenceGroup'] == equivalence_class])
+            )
+            for equivalence_class in sorted(set(equivalence_dict.values()))
+        )
 
-    def _procNautyOutput(self, nauty_stdout: str) -> None:
-        orbitalData = nauty_stdout.split("seconds")[-1].strip()
+    def nauty_equivalence(self, nauty_stdout: str, log: Optional[Logger] = None) -> Dict[int, int]:
+        if log:
+            log.debug('Nauty stdout: {0}'.format(nauty_stdout))
 
-        # last item in each group is the number of nodes and not needed 
-        eqGroups = [grp.split()[:-1] for grp in orbitalData.split(";") if grp] 
+        orbital_data = nauty_stdout.split("seconds")[-1].strip()
 
-        # expand ranges in each group
-        for grp in eqGroups:
-            expandedEqGroup = []
-            for element in grp:
-                if ":" in element:
-                    start, stop = list(map(int,element.split(":")))
-                    expandedEqGroup.extend(list(range(start, stop + 1)))
-                else:
-                    expandedEqGroup.append(int(element))
+        def eval_group_field(group_field: str) -> List[int]:
+            if ':' in group_field:
+                # Defines a range
+                start, stop = map(int, group_field.split(":"))
+                return [int(x) for x in range(start, stop + 1)]
+            else:
+                return [int(group_field)]
 
-            # append sym group and shift indexes up by 1
-            if len(expandedEqGroup) > 1:
-                self.data.equivalenceGroups[len(self.data.equivalenceGroups)] = [nauty_to_atb(x) for x in expandedEqGroup]
+        def eval_group_str(group_str: str) -> List[int]:
+            if '(' in group_str:
+                # Last element is group size '(N)', not needed
+                group_fields = group_str.split()[:-1]
+            else:
+                group_fields = group_str.split()
+            return concat([eval_group_field(group_field) for group_field in group_fields])
 
-        for atmID, atm in list(self.data.atoms.items()):
-            found = False
-            for eqGrpID, eqGrp in list(self.data.equivalenceGroups.items()):
-                if atm["index"] in eqGrp:
-                    self.data.atoms[atmID]["equivalenceGroup"] = int(eqGrpID)
-                    found = True
-                    break
-            if not found:
-                self.data.atoms[atmID]["equivalenceGroup"] = NO_EQUIVALENCE_VALUE
-        return None
+        equivalence_groups = [
+            eval_group_str(group_str)
+            for group_str in orbital_data.split(";")
+            if group_str
+        ]
+
+        equivalence_for_atom = dict(
+            concat(
+                [
+                    [(nauty_to_atb(index), n) for index in list_of_indices]
+                    for (n, list_of_indices) in enumerate(equivalence_groups)
+                ],
+            ),
+        )
+
+        return equivalence_for_atom
 
     def nauty_input(self, log: Optional[Logger] = None) -> str:
         input_str = 'n={num_atoms} g {edges}.f=[{node_partition}] xo'.format(
@@ -134,6 +147,13 @@ class NautyInterface(object):
                 for (_, indices) in sorted(atom_types.items())
             ]
         )
+
+def concat(list_of_lists: List[List[Any]]) -> List[Any]:
+    return reduce(
+        lambda acc, e: acc + e,
+        list_of_lists,
+        [],
+    )
 
 def _run(args: List[str], stdin: str, log: Optional[Any] = None) -> str:
     tmp = tempfile.TemporaryFile(buffering=0)
