@@ -13,3 +13,6 @@ errors:
 mypy: $(PYTHON_BIN_DIR)/mypy
 	MYPYPATH=$(PYTHONPATH) $(PYTHON_BIN_DIR)/mypy calcChemEquivalency.py
 .PHONY: mypy
+
+vimdiff:
+	vimdiff reference.log refactor.log
