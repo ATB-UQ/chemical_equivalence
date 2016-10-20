@@ -8,6 +8,7 @@ from chemical_equivalence.chiral import contains_stereo_heterotopic_atoms
 from chemical_equivalence.double_bond import contains_equivalence_breaking_double_bond
 from chemical_equivalence.rings import contains_inversable_rings
 from chemical_equivalence.helpers.types import FlavourCounter, Logger, Exception_Searching_Function
+from chemical_equivalence.helpers.atoms import EQUIVALENCE_CLASS_KEY
 
 EXCEPTION_SEARCHING_FUNCTIONS = [
     contains_stereo_heterotopic_atoms,
@@ -51,7 +52,7 @@ def chemicalEquivalenceExceptions(molData: MolData, flavourCounter: FlavourCount
 def clearEqGroupData(molData: MolData) -> None:
     molData.equivalenceGroups = {}
     for atom in list(molData.atoms.values()):
-        del atom["equivalenceGroup"]
+        del atom[EQUIVALENCE_CLASS_KEY]
 
 def partial_mol_data_for_pdbstr(pdb_string: str, united_atoms: bool = True, debug: bool = False) -> MolData:
     assert pdb_string, 'Empty PDB string'

@@ -4,13 +4,10 @@ from math import sqrt
 from chemical_equivalence.helpers.types import Atom
 from chemical_equivalence.NautyInterface import NO_EQUIVALENCE_VALUE
 
+EQUIVALENCE_CLASS_KEY = 'equivalenceGroup'
+
 def are_atoms_chemically_equivalent(atom1: Atom, atom2: Atom) -> bool:
-    atom1EquivalenceGroup = atom1["equivalenceGroup"]
-    atom2EquivalenceGroup = atom2["equivalenceGroup"]
-    if any([eqGroup == NO_EQUIVALENCE_VALUE for eqGroup in [atom1EquivalenceGroup, atom2EquivalenceGroup]]):
-        return False
-    else:
-        return atom1EquivalenceGroup == atom2EquivalenceGroup
+    return atom1[EQUIVALENCE_CLASS_KEY] == atom2[EQUIVALENCE_CLASS_KEY]
 
 def atom_names(atom_list: List[Atom]) -> str:
     return ', '.join([x['symbol'] for x in atom_list])
@@ -61,7 +58,7 @@ def has_all_different_neighbours(atom: Atom, atoms: List[Atom]) -> bool:
         filter(
             lambda equivalence_class: equivalence_class != NO_EQUIVALENCE_VALUE,
             [
-                neighbour_atom['equivalenceGroup']
+                neighbour_atom[EQUIVALENCE_CLASS_KEY]
                 for neighbour_atom in neighbouring_atoms(atom, atoms)
             ],
         ),

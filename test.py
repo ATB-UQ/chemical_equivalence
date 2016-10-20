@@ -7,6 +7,7 @@ from os import devnull
 from chemical_equivalence.molData import MolData
 from chemical_equivalence.calcChemEquivalency import getChemEquivGroups
 from chemical_equivalence.helpers.types import Logger, Optional
+from chemical_equivalence.helpers.atoms import EQUIVALENCE_CLASS_KEY
 
 from atb_outputs.formats import graph
 
@@ -25,7 +26,7 @@ def run_tests(log: Optional[Logger], correct_symmetry: bool = True) -> None:
         print("Rings: {0}".format(mol_data.rings), file=stdout)
         getChemEquivGroups(mol_data, log=log)
         print(list(mol_data.equivalenceGroups.values()), file=stdout)
-        print("\n".join([str((atom["index"], atom["equivalenceGroup"])) for atom in list(mol_data.atoms.values())]), file=stdout)
+        print("\n".join([str((atom["index"], atom[EQUIVALENCE_CLASS_KEY])) for atom in list(mol_data.atoms.values())]), file=stdout)
         print('', file=stdout)
 
         for (graph_format, graph_data) in graph(mol_data):

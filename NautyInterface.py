@@ -5,6 +5,7 @@ from itertools import groupby
 from functools import reduce
 
 from chemical_equivalence.helpers.types import Logger
+from chemical_equivalence.helpers.atoms import EQUIVALENCE_CLASS_KEY
 
 NAUTY_EXECUTABLE = '/usr/local/bin/dreadnaut'
 
@@ -35,7 +36,7 @@ class NautyInterface(object):
 
         equivalence_for_atom = self.nauty_equivalence(nauty_stdout)
         for atom_id in self.data.atoms.keys():
-            self.data.atoms[atom_id]["equivalenceGroup"] = equivalence_for_atom[atom_id]
+            self.data.atoms[atom_id][EQUIVALENCE_CLASS_KEY] = equivalence_for_atom[atom_id]
 
         if log:
             log.debug("Equivalence groups:\n{0}".format(self._getLogInfo(equivalence_for_atom)))
@@ -46,7 +47,7 @@ class NautyInterface(object):
         return '\n'.join(
             "{equivalence_class}: {atoms}".format(
                 equivalence_class=equivalence_class,
-                atoms = ' '.join([atom['symbol'] for atom in self.data.atoms.values() if atom['equivalenceGroup'] == equivalence_class])
+                atoms = ' '.join([atom['symbol'] for atom in self.data.atoms.values() if atom[EQUIVALENCE_CLASS_KEY] == equivalence_class])
             )
             for equivalence_class in sorted(set(equivalence_dict.values()))
         )

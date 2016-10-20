@@ -2,20 +2,18 @@ from typing import List, Any, Dict
 from logging import Logger
 
 from chemical_equivalence.helpers.types import Atom, MolData, FlavourCounter
-from chemical_equivalence.NautyInterface import NO_EQUIVALENCE_VALUE
-from chemical_equivalence.helpers.atoms import is_sterogenic_atom
+from chemical_equivalence.helpers.atoms import is_sterogenic_atom, EQUIVALENCE_CLASS_KEY
 
 MINIMUM_NEIGHBOUR_COUNT_FOR_CHIRAL = 4
 MINIMUM_IDENTICAL_NEIGHBOUR_COUNT_FOR_CHIRAL = 2
 
-def getNeighboursEquivalenceGroups(atom: Atom, molData: MolData) -> Dict[int, str]:
+def get_neighbours_equivalence_groups(atom: Atom, molData: MolData) -> Dict[int, int]:
     '''Return dictionary of: id's -> equivalence groups'''
     # Get back the equivalence groups of the neighbours and their id's
     return dict(
         [
-            (neighbour, molData.atoms[neighbour]["equivalenceGroup"])
-            for neighbour in atom["conn"]
-            if molData.atoms[neighbour]["equivalenceGroup"] != NO_EQUIVALENCE_VALUE
+            (neighbour_id, molData.atoms[neighbour_id][EQUIVALENCE_CLASS_KEY])
+            for neighbour_id in atom["conn"]
         ]
     )
 
@@ -33,7 +31,7 @@ def has_stereogenic_atom(molData: MolData, log: Logger) -> bool:
         ]
     )
 
-def hasStereoheterotopicNeighbours(neighbours_equivalence_groups: Any, log: Logger) -> bool:
+def has_stereo_heterotopic_neighbours(neighbours_equivalence_groups: Any, log: Logger) -> bool:
     '''For molecules that have at least one stereogenic atom, then any neighbour group that has
      two, and only two, chemically equivalent atoms is distereotopic. In the case where two pairs 
     of neighbours are chemically equivalent, then they are only stereoheterotopic if the chiral configurations
@@ -82,8 +80,8 @@ def contains_stereo_heterotopic_atoms(molData: MolData, flavourCounter: FlavourC
 
         for atom in list(molData.atoms.values()):
             # Get back the equivalence groups of the neighbours
-            neighbours_equivalence_groups = getNeighboursEquivalenceGroups(atom, molData)
-            if hasStereoheterotopicNeighbours(neighbours_equivalence_groups, log):
+            neighbours_equivalence_groups = get_neighbours_equivalence_groups(atom, molData)
+            if has_stereo_heterotopic_neighbours(neighbours_equivalence_groups, log):
                 # Then these two neighbours are actually stereoheterotopic and are therefore not chemically equivalent
                 # Therefore, they should manually be made non equivalent
                 # And the chemical equivalency algorithm should be re-run to avoid atoms further down the graph be considered equivalent
