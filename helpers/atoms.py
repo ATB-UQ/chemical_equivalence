@@ -1,7 +1,7 @@
 from typing import List, Any
 from math import sqrt
 
-from chemical_equivalence.helpers.types import Atom
+from chemical_equivalence.helpers.types import Atom, FlavourCounter
 
 EQUIVALENCE_CLASS_KEY = 'equivalenceGroup'
 
@@ -64,3 +64,15 @@ def neighbour_equivalence_classes(atom: Atom, atoms: List[Atom]) -> List[int]:
 def has_all_different_neighbours(atom: Atom, atoms: List[Atom]) -> bool:
     all_equivalence_classes = neighbour_equivalence_classes(atom, atoms)
     return len(set(all_equivalence_classes)) == len(all_equivalence_classes)
+
+def flavour_atoms(atoms: List[Atom], flavour_counter: FlavourCounter) -> bool:
+    '''
+    Flavours atoms.
+    Returns whether or not a rerun is necessary.
+    '''
+    should_rerun = any(['flavour' not in atom for atom in atoms])
+
+    for atom in atoms:
+        atom["flavour"] = flavour_counter.getNext()
+
+    return should_rerun

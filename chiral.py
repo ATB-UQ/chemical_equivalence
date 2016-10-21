@@ -3,7 +3,7 @@ from logging import Logger
 from itertools import groupby
 
 from chemical_equivalence.helpers.types import Atom, MolData, FlavourCounter, Tuple
-from chemical_equivalence.helpers.atoms import is_sterogenic_atom, EQUIVALENCE_CLASS_KEY, are_substituents, neighbouring_atoms
+from chemical_equivalence.helpers.atoms import is_sterogenic_atom, EQUIVALENCE_CLASS_KEY, are_substituents, neighbouring_atoms, flavour_atoms
 from chemical_equivalence.helpers.iterables import concat
 
 MINIMUM_IDENTICAL_NEIGHBOUR_COUNT_FOR_CHIRAL = 2
@@ -50,24 +50,25 @@ def contains_stereo_heterotopic_atoms(molData: MolData, flavourCounter: FlavourC
         if len(atoms_to_flavour) == 0:
             should_rerun = False
         else:
-            should_rerun = True
-            for atom in atoms_to_flavour:
-                atom["flavour"] = flavourCounter.getNext()
+            should_rerun = flavour_atoms(atoms_to_flavour, flavourCounter)
 
-        if log:
-            log.debug(
-                "Stereogenic atoms: {0}".format(
-                    [atom["symbol"] for atom in sterogenic_atoms],
-                ),
-            )
-            log.debug("HAS AT LEAST ONE STEREOGENIC ATOM. NOW LOOKING FOR STEREOHETEROTOPIC ATOMS.")
+            if log:
+                if should_rerun:
+                    log.debug(
+                        "Stereogenic atoms: {0}".format(
+                            [atom["symbol"] for atom in sterogenic_atoms],
+                        ),
+                    )
+                    log.debug("HAS AT LEAST ONE STEREOGENIC ATOM. NOW LOOKING FOR STEREOHETEROTOPIC ATOMS.")
 
-            if len(sterogenic_atoms) >= 2:
-                log.warning("KNOWN ISSUES: if there are two or more groups of stereoheterotopic atoms then chemical equivalence depends on chiral configuration (R or S)")
+                    if len(sterogenic_atoms) >= 2:
+                        log.warning("KNOWN ISSUES: if there are two or more groups of stereoheterotopic atoms then chemical equivalence depends on chiral configuration (R or S)")
 
-            for pair_of_atoms in pairs_of_stereo_heterotopic_atoms:
-                log.debug(
-                    "FOUND 2 STEREOHETEROTOPIC ATOMS: {0}".format([atom["symbol"] for atom in pair_of_atoms])
-                )
+                    for pair_of_atoms in pairs_of_stereo_heterotopic_atoms:
+                        log.debug(
+                            "FOUND 2 STEREOHETEROTOPIC ATOMS: {0}".format([atom["symbol"] for atom in pair_of_atoms])
+                        )
+                else:
+                    log.debug('No rerun necessary.')
 
     return should_rerun

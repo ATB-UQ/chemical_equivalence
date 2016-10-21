@@ -3,43 +3,45 @@ from logging import Logger
 from functools import reduce
 
 from chemical_equivalence.config import DOUBLE_BOND_LENGTH_CUTOFF
-from chemical_equivalence.helpers.atoms import are_atoms_chemically_equivalent, atom_names, atoms_with_indices, neighbouring_atoms, is_sp2_carbon_atom, is_carbon, is_bonded_to_sp2_carbon, atom_distance
+from chemical_equivalence.helpers.atoms import are_atoms_chemically_equivalent, atom_names, atoms_with_indices, neighbouring_atoms, is_sp2_carbon_atom, is_carbon, is_bonded_to_sp2_carbon, atom_distance, flavour_atoms
 from chemical_equivalence.helpers.types import Atom, FlavourCounter, MolData
 
 def contains_equivalence_breaking_double_bond(molData: MolData, flavourCounter: FlavourCounter, log: Optional[Logger] = None) -> bool:
     connected_sp2_carbons = pairs_of_bonded_sp2_carbon_atoms(molData.atoms, log)
 
+    def should_rerun_for_carbon_pair(atom_pair: Tuple[Atom, Atom]):
+        (atom1, atom2) = atom_pair
+        if log:
+            log.debug('Found double bond that could disturb chemical equivalency: {0}'.format(atom_names([atom1, atom2])))
+
+        # Get the neighbouring atoms to atom1 and atom2, excluding eachother
+        neighbours = {
+            atom1["index"]: getNeighboursExcludingOne(atom1, atom2, molData),
+            atom2["index"]: getNeighboursExcludingOne(atom2, atom1, molData),
+        }
+
+        if log:
+            log.debug("    Double bond neighbourhood: ({atom1Neighbours})--{atom1}={atom2}--({atom2Neighbours})".format(
+                atom1=atom1["symbol"],
+                atom2=atom2["symbol"],
+                atom1Neighbours=",".join([n["symbol"] for n in neighbours[atom1["index"]]]),
+                atom2Neighbours=",".join([n["symbol"] for n in neighbours[atom2["index"]]]),
+            ))
+
+        requires_rerun = correct_symmetry(neighbours, flavourCounter, log)
+        if requires_rerun:
+            should_rerun = True
+        else:
+            should_rerun = False
+
     if len(connected_sp2_carbons) == 0:
         should_rerun = False
     else:
-        for (atom1, atom2) in connected_sp2_carbons:
-            if log:
-                log.debug('Found double bond that could disturb chemical equivalency: {0}'.format(atom_names([atom1, atom2])))
-
-            # Get the neighbouring atoms to atom1 and atom2, excluding eachother
-            neighbours = {
-                atom1["index"]: getNeighboursExcludingOne(atom1, atom2, molData),
-                atom2["index"]: getNeighboursExcludingOne(atom2, atom1, molData),
-            }
-
-            if log:
-                log.debug("    Double bond neighbourhood: ({atom1Neighbours})--{atom1}={atom2}--({atom2Neighbours})".format(
-                    atom1=atom1["symbol"],
-                    atom2=atom2["symbol"],
-                    atom1Neighbours=",".join([n["symbol"] for n in neighbours[atom1["index"]]]),
-                    atom2Neighbours=",".join([n["symbol"] for n in neighbours[atom2["index"]]]),
-                ))
-
-            requires_rerun = correct_symmetry(neighbours, flavourCounter, log)
-            if requires_rerun:
-                should_rerun = True
-            else:
-                should_rerun = False
+        should_rerun = any([should_rerun_for_carbon_pair(atom_pair) for atom_pair in connected_sp2_carbons])
 
     return should_rerun
 
 def correct_symmetry(neighbours: Any, flavourCounter: FlavourCounter, log: Logger) -> bool:
-    should_rerun = False
     neighbourListLeft, neighbourListRight = list(neighbours.values())
 
     # Try matching them two by two
@@ -53,9 +55,7 @@ def correct_symmetry(neighbours: Any, flavourCounter: FlavourCounter, log: Logge
             log.debug(
                 "    Removed chemical equivalence between {0} and {1} (other side of the double bond)".format(*[x["symbol"] for x in neighbourListLeft]),
             )
-        neighbourListLeft[0]["flavour"] = flavourCounter.getNext()
-        neighbourListLeft[1]["flavour"] = flavourCounter.getNext()
-        should_rerun = True
+        should_rerun = flavour_atoms(neighbourListLeft, flavourCounter)
     elif are_atoms_chemically_equivalent(*neighbourListRight) and not are_atoms_chemically_equivalent(*neighbourListLeft):
         if log:
             log.debug(
@@ -64,9 +64,9 @@ def correct_symmetry(neighbours: Any, flavourCounter: FlavourCounter, log: Logge
             log.debug(
                 "    Removed chemical equivalence between {0} and {1} (other side of the double bond)".format(*[x["symbol"] for x in neighbourListRight]),
             )
-        neighbourListRight[0]["flavour"] = flavourCounter.getNext()
-        neighbourListRight[1]["flavour"] = flavourCounter.getNext()
-        should_rerun = True
+        should_rerun = flavour_atoms(neighbourListRight, flavourCounter)
+    else:
+        should_rerun = False
     # If they belong to the same groups, then they need to be colored
     # so that no face in more symetric than the other
 

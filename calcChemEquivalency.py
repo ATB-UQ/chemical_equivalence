@@ -24,8 +24,7 @@ def getChemEquivGroups(molData: MolData, log: Optional[Logger] = None, correct_s
         # For cases with non-equivalent atoms we need to add flavour (some additional degree of freedom)
         # to distinguish them
         flavourCounter = FlavourCounter()
-        should_rerun = correct_chemical_equivalence_exceptions(molData, flavourCounter, log)
-        if should_rerun:
+        while correct_chemical_equivalence_exceptions(molData, flavourCounter, log):
             clearEqGroupData(molData)
             nautyInterface.calcEquivGroups(log)
 
