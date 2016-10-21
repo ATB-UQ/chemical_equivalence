@@ -114,7 +114,7 @@ class NautyInterface(object):
             return 'iacm' if 'iacm' in atom else 'type'
 
         def atom_descriptor_for(atom: Dict[str, Any]) -> str:
-            base_atom_descriptor = atom[atom_descriptor_key_for(atom)]
+            base_atom_descriptor = str(atom[atom_descriptor_key_for(atom)])
 
             if "flavour" in atom:
                 # Append flavour to the atom descriptor in order to distinguish between stereoheterotopic atoms.
