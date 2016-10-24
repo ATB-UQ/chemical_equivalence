@@ -128,10 +128,11 @@ def _get_all_rings_for_bond(mol_graph: Any, bond_atom_ids: Any) -> List[Any]:
     found = True
     while found:
         found = False
-        ring = shortestPath(mol_graph,
-                            i0,
-                            i1,
-                            )
+        ring = shortestPath(
+            mol_graph,
+            i0,
+            i1,
+        )
         if not ring in all_rings:
             all_rings.append(ring)
             found = True

@@ -5,7 +5,6 @@ class MolDataFailure(Exception):
     pass
 
 class MolData(object):
-
     def __init__(self, pdbStr, log=None):
         self.atoms      = {}
         self.bonds     = []

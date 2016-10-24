@@ -1,8 +1,6 @@
 from typing import Any, Dict, Callable, Optional, Tuple, List
 from logging import Logger
 
-from chemical_equivalence.molData import MolData
-
 Atom = Dict[str, Any]
 
 Ring = Dict[str, Any]
@@ -15,5 +13,7 @@ class FlavourCounter(object):
     def getNext(self) -> int:
         self.i += 1
         return self.i
+
+MolData = Any
 
 Exception_Searching_Function = Callable[[MolData, FlavourCounter, Logger], bool]
