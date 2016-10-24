@@ -9,7 +9,7 @@ from chemical_equivalence.helpers.types import Atom, FlavourCounter, MolData
 def contains_equivalence_breaking_double_bond(molData: MolData, flavourCounter: FlavourCounter, log: Optional[Logger] = None) -> bool:
     connected_sp2_carbons = pairs_of_bonded_sp2_carbon_atoms(molData.atoms, log)
 
-    def should_rerun_for_carbon_pair(atom_pair: Tuple[Atom, Atom]):
+    def should_rerun_for_carbon_pair(atom_pair: Tuple[Atom, Atom]) -> bool:
         (atom1, atom2) = atom_pair
         if log:
             log.debug('Found double bond that could disturb chemical equivalency: {0}'.format(atom_names([atom1, atom2])))
@@ -33,6 +33,7 @@ def contains_equivalence_breaking_double_bond(molData: MolData, flavourCounter: 
             should_rerun = True
         else:
             should_rerun = False
+        return should_rerun
 
     if len(connected_sp2_carbons) == 0:
         should_rerun = False
@@ -83,7 +84,7 @@ def getNeighboursExcludingOne(atom: Atom, excludedAtom: Atom, molData: MolData) 
     ]
 
 def pairs_of_bonded_sp2_carbon_atoms(atoms: Dict[int, Atom], log: Logger) -> List[Tuple[Atom, Atom]]:
-    def canonise_pair(atom_1: Atom, atom_2: Atom):
+    def canonise_pair(atom_1: Atom, atom_2: Atom) -> Tuple[Atom, Atom]:
         return tuple(
             sorted(
                 (atom_1, atom_2),
