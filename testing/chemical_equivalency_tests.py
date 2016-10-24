@@ -1,17 +1,26 @@
 import sys
 from os.path import join, abspath
-sys.path.append(join(abspath(__file__), "../"))
 import unittest
-from molData import MolData
-import calcChemEquivalency
 import logging
+
+from chemical_equivalence.molData import MolData
+from chemical_equivalence.calcChemEquivalency import getChemEquivGroups
+from chemical_equivalence.test import TESTING_DIR
 
 class ChemicalEquivalencyTest(unittest.TestCase):
 
     def run_unit_check(self, base_file, expected_result_list):
         logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - [%(levelname)s] - %(message)s  -->  (%(module)s.%(funcName)s: %(lineno)d)', datefmt='%d-%m-%Y %H:%M:%S')
-        data = MolData(open("{base_file}.pdb".format(base_file=base_file)).read(), logging.getLogger())
-        calcChemEquivalency.getChemEquivGroups(data, log=logging.getLogger())
+        data = MolData(
+            open(
+                join(
+                    TESTING_DIR,
+                    "{base_file}.pdb".format(base_file=base_file),
+                ),
+            ).read(),
+            logging.getLogger(),
+        )
+        getChemEquivGroups(data, log=logging.getLogger())
         result_set = set(map(frozenset, data.equivalenceGroups.values()))
         expectedResultSet = set(map(frozenset, expected_result_list))
 

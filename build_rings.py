@@ -2,6 +2,7 @@ from copy import deepcopy
 from math import sqrt
 
 from chemical_equivalence.utilities.dijkstra import shortestPath
+from chemical_equivalence.helpers.types import MolData, Logger, Optional, Any, List, Dict, Atom, Tuple, Ring, Coordinate
 
 ACCEPTED_PLANAR_VALENCE_PER_ATOM_TYPE = {
     'C': [3],
@@ -11,9 +12,9 @@ ACCEPTED_PLANAR_VALENCE_PER_ATOM_TYPE = {
     }
 PLANAR_DISTANCE_TOL = 0.025
 
-def build_rings(data, log=None):
+def build_rings(data: MolData, log: Optional[Logger] = None) -> Dict[int, Ring]:
 
-    def _is_ring_in_all_rings(ring, all_rings):
+    def _is_ring_in_all_rings(ring: Any, all_rings: List[Any]) -> bool:
         for existing_ring in list(all_rings.values()):
             if frozenset(existing_ring["atoms"]) == frozenset(ring):
                 return True
@@ -30,7 +31,8 @@ def build_rings(data, log=None):
     for bond in data.bonds:
         rings = _get_all_rings_for_bond(deepcopy(mol_graph), bond["atoms"])
         for ring in rings:
-            if len(ring)==2: continue
+            if len(ring) == 2:
+                continue
             ring = list(map(int, ring))
             if not _is_ring_in_all_rings(ring, all_rings):
                 ring_dict = {"atoms": ring, "aromatic": False}
@@ -39,21 +41,20 @@ def build_rings(data, log=None):
                 ring_count += 1
     return all_rings
 
-def is_ring_aromatic(data, ring, log):
+def is_ring_aromatic(data: MolData, ring: Ring, log: Logger) -> bool:
     return has_ring_planar_geometry(data, ring, log) and has_ring_planar_valences(data, ring, log)
 
-def has_ring_planar_geometry(data, ring, log):
-
+def has_ring_planar_geometry(data: MolData, ring: Ring, log: Logger) -> bool:
     if len(ring["atoms"]) < 4:
         return False
+    else:
+        # Get dihedral atoms
+        return is_ring_planar(data, ring, log)
 
-    # Get dihedral atoms
-    return is_ring_planar(data, ring, log)
-
-def has_ring_planar_valences(data, ring, log):
+def has_ring_planar_valences(data: MolData, ring: Ring, log: Logger) -> bool:
     ''' Prevents rings with unual valences to be assigned as planar'''
 
-    ring_atoms = [ data.atoms[atom_id] for atom_id in ring['atoms'] ]
+    ring_atoms = [data.atoms[atom_id] for atom_id in ring['atoms']]
     has_aromatic_valences = True
     for atom in ring_atoms:
         for atom_type, accepted_valences in list(ACCEPTED_PLANAR_VALENCE_PER_ATOM_TYPE.items()):
@@ -67,7 +68,7 @@ def has_ring_planar_valences(data, ring, log):
         if log: log.debug("{0} DOES NOT have the valences expected for a planar ring and will not be treated as such".format([data[x]["symbol"] for x in ring['atoms']]))
     return has_aromatic_valences
 
-def _serialize_weighted_graph(G, indent="", output=[]):
+def _serialize_weighted_graph(G: Any, indent: str = "", output: List[Any] = []) -> None:
     for node, branches in list(G.items()):
         line = indent + str(node)
         if type(branches) is dict:
@@ -77,46 +78,49 @@ def _serialize_weighted_graph(G, indent="", output=[]):
             line += ": {0}".format(branches)
             output.append( line )
 
-def is_ring_planar(data, ring, log):
+def is_ring_planar(data: MolData, ring: Ring, log: Logger) -> bool:
     atoms = data.atoms
     coord_type = "ocoord" if "ocoord" in list(atoms.values())[0] else "coord"
 
     ring_atoms = [atoms[atom_id] for atom_id in ring["atoms"]]
 
-    A,B,C,D = equation_of_plane(ring_atoms[0][coord_type],
-                              ring_atoms[1][coord_type],
-                              ring_atoms[2][coord_type],
-                              )
+    A, B, C, D = equation_of_plane(
+        ring_atoms[0][coord_type],
+        ring_atoms[1][coord_type],
+        ring_atoms[2][coord_type],
+    )
     max_distance = 0
     for atom in ring_atoms[3:]:
-        distance = _distance_from_plane(A,B,C,D,atom[coord_type])
+        distance = _distance_from_plane(A, B, C, D, atom[coord_type])
         max_distance = max(abs(distance), max_distance)
         if abs(distance) > PLANAR_DISTANCE_TOL:
             return False
-    if log: log.debug("Maximum distance to plane is {0:.3f}nm ({1})".format(max_distance,
-                                                                         [data[x]["symbol"] for x in ring["atoms"]],
-                                                                         )
-                         )
+    if log:
+        log.debug(
+            "Maximum distance to plane is {0:.3f}nm ({1})".format(
+                max_distance,
+                [data[x]["symbol"] for x in ring["atoms"]],
+            ),
+        )
     return True
 
-def equation_of_plane(a0, a1, a2):
+def equation_of_plane(a0: Coordinate, a1: Coordinate, a2: Coordinate) -> Tuple[float, float, float, float]:
     det1 = ( (a1[1]-a0[1])*(a2[2]-a0[2]) ) - ( (a2[1]-a0[1])*(a1[2]-a0[2]) )
     det2 = ( (a1[2]-a0[2])*(a2[0]-a0[0]) ) - ( (a2[2]-a0[2])*(a1[0]-a0[0]) )
     det3 = ( (a1[0]-a0[0])*(a2[1]-a0[1]) ) - ( (a2[0]-a0[0])*(a1[1]-a0[1]) )
     D = det1 * a0[0] + det2 * a0[1] + det3 * a0[2]
     D = -D
-    return det1, det2, det3, D
+    return (det1, det2, det3, D)
 
-def _distance_from_plane(A, B, C, D, pt):
+def _distance_from_plane(A: float, B: float, C: float, D: float, pt: Coordinate) -> float:
     x, y, z = pt
-    denom = sqrt(A**2+B**2+C**2)
+    denom = sqrt(A**2 + B**2 + C**2)
     if not denom: return 0
-    numer = A*x + B*y + C*z + D
-    distance = numer/denom
+    numer = A * x + B * y + C * z + D
+    distance = numer / denom
     return distance
 
-def _get_all_rings_for_bond(mol_graph, bond_atom_ids):
-
+def _get_all_rings_for_bond(mol_graph: Any, bond_atom_ids: Any) -> List[Any]:
     i0 = str(bond_atom_ids[0])
     i1 = str(bond_atom_ids[1])
     all_rings = []
@@ -136,7 +140,7 @@ def _get_all_rings_for_bond(mol_graph, bond_atom_ids):
     mol_graph[i0][i1] = 1
     return all_rings
 
-def _get_graph_dict(atoms):
+def _get_graph_dict(atoms: Dict[int, Atom]) -> Dict[str, Atom]:
     G = {}
     for atom_id, atom in list(atoms.items()):
         tmp = {}
