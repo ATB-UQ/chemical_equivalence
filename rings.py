@@ -12,7 +12,7 @@ def contains_inversable_rings(molData: MolData, flavourCounter: FlavourCounter, 
     all_atoms = list(molData.atoms.values())
     rings = list(molData.rings.values())
 
-    def should_rerun_for_ring(ring: List[Atom]):
+    def should_rerun_for_ring(ring: List[Atom]) -> bool:
         ring_atoms = atoms_with_indices(all_atoms, ring['atoms'])
 
         if not is_inversable_ring(ring_atoms, log):
@@ -29,13 +29,14 @@ def contains_inversable_rings(molData: MolData, flavourCounter: FlavourCounter, 
                 for node in ring_atoms:
                     substituents = get_ring_substituents(node, all_atoms, ring_atoms)
                     if len(substituents) == 2 :
-                        should_rerun = flavour_atoms(substituents, flavourCounter)
+                        should_rerun = should_rerun or flavour_atoms(substituents, flavourCounter)
                         if log:
                             log.debug("    Make heterogeneous {0} and {1} (axial and equatorial substituents on inversable ring)".format(*[x['symbol'] for x in substituents]))
                     else :
                         if log: log.debug("    There were no axial and equatorial substituent, as there were only {0} of them.".format(len(substituents)))
             else:
                 if log: log.debug('    Ring did not contain any asymmetrically-substituted nodes that will break the axial-equatorial symmetry')
+            return should_rerun
 
     if len(rings) == 0:
         should_rerun = False
