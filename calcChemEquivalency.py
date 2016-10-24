@@ -18,7 +18,7 @@ EXCEPTION_SEARCHING_FUNCTIONS = [
 
 def getChemEquivGroups(molData: MolData, log: Optional[Logger] = None, correct_symmetry: bool = True):
     nautyInterface = NautyInterface(molData)
-    nautyInterface.calcEquivGroups(log)
+    equivalence_dict = nautyInterface.calcEquivGroups(log)
 
     if correct_symmetry:
         # For cases with non-equivalent atoms we need to add flavour (some additional degree of freedom)
@@ -26,9 +26,9 @@ def getChemEquivGroups(molData: MolData, log: Optional[Logger] = None, correct_s
         flavourCounter = FlavourCounter()
         while correct_chemical_equivalence_exceptions(molData, flavourCounter, log):
             clearEqGroupData(molData)
-            nautyInterface.calcEquivGroups(log)
+            equivalence_dict = nautyInterface.calcEquivGroups(log)
 
-    return molData.equivalenceGroups
+    return equivalence_dict
 
 def correct_chemical_equivalence_exceptions(molData: MolData, flavourCounter: FlavourCounter, log: Logger, exception_searching_functions: List[Exception_Searching_Function] = EXCEPTION_SEARCHING_FUNCTIONS) -> bool:
     # If there is a chemical equivalence breaking groups then should_rerun = True

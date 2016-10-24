@@ -39,7 +39,7 @@ class NautyInterface(object):
         if log:
             log.debug("Equivalence groups:\n{0}".format(self._getLogInfo(equivalence_for_atom)))
 
-        return None
+        return equivalence_for_atom
 
     def _getLogInfo(self, equivalence_dict: Dict[int, int]) -> str:
         return '\n'.join(
