@@ -4,7 +4,7 @@ from functools import reduce
 
 from chemical_equivalence.config import DOUBLE_BOND_LENGTH_CUTOFF
 from chemical_equivalence.helpers.atoms import are_atoms_chemically_equivalent, atom_names, atoms_with_indices, neighbouring_atoms, is_sp2_carbon_atom, is_carbon, is_bonded_to_sp2_carbon, atom_distance, flavour_atoms
-from chemical_equivalence.helpers.types import Atom, FlavourCounter, MolData
+from chemical_equivalence.helpers.types_helpers import Atom, FlavourCounter, MolData
 
 def contains_equivalence_breaking_double_bond(molData: MolData, flavourCounter: FlavourCounter, log: Optional[Logger] = None) -> bool:
     connected_sp2_carbons = pairs_of_bonded_sp2_carbon_atoms(molData.atoms, log)

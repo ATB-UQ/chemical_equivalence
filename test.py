@@ -4,9 +4,8 @@ from logging import basicConfig, getLogger, DEBUG, StreamHandler, Formatter
 from sys import stdout
 from os import devnull
 
-from chemical_equivalence.molData import MolData
 from chemical_equivalence.calcChemEquivalency import getChemEquivGroups
-from chemical_equivalence.helpers.types import Logger, Optional
+from chemical_equivalence.helpers.types_helpers import Logger, Optional, MolData
 from chemical_equivalence.helpers.atoms import EQUIVALENCE_CLASS_KEY
 
 from atb_outputs.graph import graph_img

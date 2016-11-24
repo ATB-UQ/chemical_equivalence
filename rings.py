@@ -1,6 +1,6 @@
 from typing import Dict, Any, Optional, List
 
-from chemical_equivalence.helpers.types import MolData, FlavourCounter, Logger, Atom
+from chemical_equivalence.helpers.types_helpers import MolData, FlavourCounter, Logger, Atom
 from chemical_equivalence.helpers.atoms import are_atoms_chemically_equivalent, atom_names, atoms_with_indices, neighbouring_atoms, flavour_atoms
 
 INVERSABLE_RING_SIZES = [5, 6, 7, 8]

@@ -3,7 +3,7 @@ import tempfile
 from typing import Union, Any, Optional, List, Dict
 from itertools import groupby
 
-from chemical_equivalence.helpers.types import Logger
+from chemical_equivalence.helpers.types_helpers import Logger
 from chemical_equivalence.helpers.atoms import EQUIVALENCE_CLASS_KEY
 from chemical_equivalence.helpers.iterables import concat
 

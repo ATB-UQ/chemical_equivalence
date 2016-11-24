@@ -2,7 +2,7 @@ from typing import List, Any, Dict
 from logging import Logger
 from itertools import groupby
 
-from chemical_equivalence.helpers.types import Atom, MolData, FlavourCounter, Tuple
+from chemical_equivalence.helpers.types_helpers import Atom, MolData, FlavourCounter, Tuple
 from chemical_equivalence.helpers.atoms import is_sterogenic_atom, EQUIVALENCE_CLASS_KEY, are_substituents, neighbouring_atoms, flavour_atoms
 from chemical_equivalence.helpers.iterables import concat
 

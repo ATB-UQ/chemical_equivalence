@@ -3,9 +3,8 @@ from os.path import join
 import unittest
 import logging
 
-from chemical_equivalence.molData import MolData
+from chemical_equivalence.helpers.types_helpers import MolData
 from chemical_equivalence.calcChemEquivalency import getChemEquivGroups
-from chemical_equivalence.build_rings import build_rings
 from chemical_equivalence.test import TESTING_DIR
 
 class ChemicalEquivalencyTest(unittest.TestCase):
@@ -17,7 +16,6 @@ class ChemicalEquivalencyTest(unittest.TestCase):
         )
         logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - [%(levelname)s] - %(message)s  -->  (%(module)s.%(funcName)s: %(lineno)d)', datefmt='%d-%m-%Y %H:%M:%S')
         getChemEquivGroups(data, log=logging.getLogger())
-        build_rings(data)
         result_set = set(map(frozenset, data.equivalenceGroups.values()))
         expectedResultSet = set(map(frozenset, expected_result_list))
 

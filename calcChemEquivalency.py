@@ -3,12 +3,13 @@ from typing import Any, Optional, List
 
 from chemical_equivalence.log_helpers import print_stderr
 from chemical_equivalence.NautyInterface import NautyInterface
-from chemical_equivalence.molData import MolData, MolDataFailure
 from chemical_equivalence.chiral import contains_stereo_heterotopic_atoms
 from chemical_equivalence.double_bond import contains_equivalence_breaking_double_bond
 from chemical_equivalence.rings import contains_inversable_rings
-from chemical_equivalence.helpers.types import FlavourCounter, Logger, Exception_Searching_Function
+from chemical_equivalence.helpers.types_helpers import FlavourCounter, Logger, Exception_Searching_Function
 from chemical_equivalence.helpers.atoms import EQUIVALENCE_CLASS_KEY
+
+from atb_outputs.mol_data import MolData, MolDataFailure
 
 EXCEPTION_SEARCHING_FUNCTIONS = [
     contains_stereo_heterotopic_atoms,

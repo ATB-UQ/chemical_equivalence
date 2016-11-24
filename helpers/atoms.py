@@ -1,7 +1,7 @@
 from typing import List, Any
 from math import sqrt
 
-from chemical_equivalence.helpers.types import Atom, FlavourCounter
+from chemical_equivalence.helpers.types_helpers import Atom, FlavourCounter
 
 EQUIVALENCE_CLASS_KEY = 'equivalenceGroup'
 

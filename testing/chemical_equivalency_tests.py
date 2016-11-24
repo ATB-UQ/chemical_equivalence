@@ -5,7 +5,7 @@ import logging
 from os import devnull
 devnull_stream = open(devnull, 'w')
 
-from chemical_equivalence.molData import MolData
+from chemical_equivalence.helpers.types_helpers import MolData
 from chemical_equivalence.calcChemEquivalency import getChemEquivGroups
 from chemical_equivalence.test import TESTING_DIR
 
