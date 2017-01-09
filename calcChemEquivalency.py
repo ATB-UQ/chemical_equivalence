@@ -1,5 +1,5 @@
 from optparse import OptionParser
-from typing import Any, Optional, List
+from typing import Any, Optional, List, Dict, Tuple
 
 from chemical_equivalence.log_helpers import print_stderr
 from chemical_equivalence.NautyInterface import NautyInterface
@@ -17,19 +17,22 @@ EXCEPTION_SEARCHING_FUNCTIONS = [
     contains_inversable_rings,
 ]
 
-def getChemEquivGroups(molData: MolData, log: Optional[Logger] = None, correct_symmetry: bool = True):
+def getChemEquivGroups(molData: MolData, log: Optional[Logger] = None, correct_symmetry: bool = True) -> Tuple[Dict[Any, Any], int]:
     nautyInterface = NautyInterface(molData)
     equivalence_dict = nautyInterface.calcEquivGroups(log)
+
+    n_iterations = 0
 
     if correct_symmetry:
         # For cases with non-equivalent atoms we need to add flavour (some additional degree of freedom)
         # to distinguish them
         flavourCounter = FlavourCounter()
         while correct_chemical_equivalence_exceptions(molData, flavourCounter, log):
+            n_iterations += 1
             clearEqGroupData(molData)
             equivalence_dict = nautyInterface.calcEquivGroups(log)
 
-    return equivalence_dict
+    return (equivalence_dict, n_iterations)
 
 def correct_chemical_equivalence_exceptions(molData: MolData, flavourCounter: FlavourCounter, log: Logger, exception_searching_functions: List[Exception_Searching_Function] = EXCEPTION_SEARCHING_FUNCTIONS) -> bool:
     # If there is a chemical equivalence breaking groups then should_rerun = True
