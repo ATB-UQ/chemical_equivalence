@@ -52,6 +52,8 @@ def run_tests(log: Optional[Logger], correct_symmetry: bool = True) -> None:
                     return_pos=True,
                     pos=pos,
                     molecule_graph=None,
+                    use_random_colors=False,
+                    shuffle_equivalence_classes=False,
                 )
 
                 if test_pdb_file not in graph_for_test:
