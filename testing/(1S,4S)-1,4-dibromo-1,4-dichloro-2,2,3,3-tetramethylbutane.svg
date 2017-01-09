@@ -1,0 +1,28 @@
+<?xml version="1.0"?>
+<svg xmlns="http://www.w3.org/2000/svg"
+xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:cml="http://www.xml-cml.org/schema" width="220" height="209.282" x="0" y="0" font-family="sans-serif" stroke="rgb(0,0,0)" stroke-width="1"  stroke-linecap="round">
+<rect x="0%" y="0%" width="100%" height="100%" stroke-width="0" fill="rgb(255,255,255)"  />
+<line x1="180.0" y1="100.0" x2="140.0" y2="100.0" stroke="rgb(0,0,0)"  stroke-width="1.0"/>
+<line x1="140.0" y1="100.0" x2="140.0" y2="60.0" stroke="rgb(0,0,0)"  stroke-width="1.0"/>
+<line x1="140.0" y1="100.0" x2="100.0" y2="100.0" stroke="rgb(0,0,0)"  stroke-width="1.0"/>
+<line x1="140.0" y1="100.0" x2="140.0" y2="140.0" stroke="rgb(0,0,0)"  stroke-width="1.0"/>
+<line x1="144.2" y1="56.6" x2="145.0" y2="58.0" stroke="rgb(0,0,0)"  stroke-width="1.0"/>
+<line x1="147.6" y1="53.9" x2="149.1" y2="56.4" stroke="rgb(0,0,0)"  stroke-width="1.0"/>
+<line x1="151.0" y1="51.2" x2="153.1" y2="54.8" stroke="rgb(0,0,0)"  stroke-width="1.0"/>
+<line x1="154.4" y1="48.5" x2="157.1" y2="53.2" stroke="rgb(0,0,0)"  stroke-width="1.0"/>
+<line x1="157.8" y1="45.8" x2="161.2" y2="51.7" stroke="rgb(0,0,0)"  stroke-width="1.0"/>
+<line x1="161.2" y1="43.1" x2="165.2" y2="50.1" stroke="rgb(0,0,0)"  stroke-width="1.0"/>
+<line x1="140.0" y1="60.0" x2="116.6" y2="46.5" stroke="rgb(0,0,0)"  stroke-width="1.0"/>
+<line x1="100.0" y1="100.0" x2="80.0" y2="134.6" stroke="rgb(0,0,0)"  stroke-width="1.0"/>
+<line x1="100.0" y1="100.0" x2="65.4" y2="80.0" stroke="rgb(0,0,0)"  stroke-width="1.0"/>
+<line x1="100.0" y1="100.0" x2="100.0" y2="60.0" stroke="rgb(0,0,0)"  stroke-width="1.0"/>
+<polygon points="80.000000 134.641016 96.864102 155.850497 89.935898 159.850497 " stroke-width="1.000000" fill="rgb(0,0,0)"  stroke="rgb(0,0,0)" />
+<line x1="80.0" y1="134.6" x2="53.0" y2="134.6" stroke="rgb(0,0,0)"  stroke-width="1.0"/>
+<text x="168.641016" y="48.000000" fill="rgb(30,239,30)"  stroke="rgb(30,239,30)" stroke-width="1" font-size="16" >Cl</text>
+<text x="87.358984" y="48.000000" fill="rgb(165,40,40)"  stroke="rgb(165,40,40)" stroke-width="1" font-size="16" >Br</text>
+<text x="94.000000" y="177.282032" fill="rgb(30,239,30)"  stroke="rgb(30,239,30)" stroke-width="1" font-size="16" >Cl</text>
+<text x="22.000000" y="142.641016" fill="rgb(165,40,40)"  stroke="rgb(165,40,40)" stroke-width="1" font-size="16" >Br</text>
+<text font-size="18.000000" fill ="black" font-family="sans-serif"
+x="10.000000" y="20.000000" ></text>
+<title> - Open Babel Depiction</title>
+</svg>

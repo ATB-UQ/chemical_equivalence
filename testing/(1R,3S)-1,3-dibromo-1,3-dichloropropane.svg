@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+<svg xmlns="http://www.w3.org/2000/svg"
+xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:cml="http://www.xml-cml.org/schema" width="218.564" height="140" x="0" y="0" font-family="sans-serif" stroke="rgb(0,0,0)" stroke-width="1"  stroke-linecap="round">
+<rect x="0%" y="0%" width="100%" height="100%" stroke-width="0" fill="rgb(255,255,255)"  />
+<polygon points="143.923 60 147.923 86.8 139.923 86.8 " stroke-width="1" fill="rgb(0,0,0)"  stroke="rgb(0,0,0)" />
+<line x1="143.9" y1="60.0" x2="167.3" y2="46.5" stroke="rgb(0,0,0)"  stroke-width="1.0"/>
+<line x1="143.9" y1="60.0" x2="109.3" y2="40.0" stroke="rgb(0,0,0)"  stroke-width="1.0"/>
+<line x1="109.3" y1="40.0" x2="74.6" y2="60.0" stroke="rgb(0,0,0)"  stroke-width="1.0"/>
+<line x1="69.6" y1="58.0" x2="70.4" y2="56.6" stroke="rgb(0,0,0)"  stroke-width="1.0"/>
+<line x1="65.6" y1="56.4" x2="67.0" y2="53.9" stroke="rgb(0,0,0)"  stroke-width="1.0"/>
+<line x1="61.5" y1="54.8" x2="63.6" y2="51.2" stroke="rgb(0,0,0)"  stroke-width="1.0"/>
+<line x1="57.5" y1="53.2" x2="60.2" y2="48.5" stroke="rgb(0,0,0)"  stroke-width="1.0"/>
+<line x1="53.5" y1="51.7" x2="56.8" y2="45.8" stroke="rgb(0,0,0)"  stroke-width="1.0"/>
+<line x1="49.4" y1="50.1" x2="53.4" y2="43.1" stroke="rgb(0,0,0)"  stroke-width="1.0"/>
+<line x1="74.6" y1="60.0" x2="74.6" y2="87.0" stroke="rgb(0,0,0)"  stroke-width="1.0"/>
+<text x="137.923048" y="108.000000" fill="rgb(30,239,30)"  stroke="rgb(30,239,30)" stroke-width="1" font-size="16" >Cl</text>
+<text x="172.564065" y="48.000000" fill="rgb(165,40,40)"  stroke="rgb(165,40,40)" stroke-width="1" font-size="16" >Br</text>
+<text x="22.000000" y="48.000000" fill="rgb(30,239,30)"  stroke="rgb(30,239,30)" stroke-width="1" font-size="16" >Cl</text>
+<text x="68.641016" y="108.000000" fill="rgb(165,40,40)"  stroke="rgb(165,40,40)" stroke-width="1" font-size="16" >Br</text>
+<text font-size="18.000000" fill ="black" font-family="sans-serif"
+x="10.000000" y="20.000000" ></text>
+<title> - Open Babel Depiction</title>
+</svg>
