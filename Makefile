@@ -20,3 +20,7 @@ errors:
 mypy: $(PYTHON_BIN_DIR)/mypy
 	MYPYPATH=$(PYTHONPATH) $(PYTHON_BIN_DIR)/mypy calcChemEquivalency.py
 .PHONY: mypy
+
+timing_table_rows:
+	make test | egrep '&' 2>&1
+.PHONY: timing_table_rows
