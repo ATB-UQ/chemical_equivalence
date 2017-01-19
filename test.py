@@ -73,12 +73,13 @@ def run_tests(log: Optional[Logger], correct_symmetry: bool = True) -> None:
             assert len(set(list_of_n_iterations)) == 1, list_of_n_iterations
 
             print(
-                r'{molecule_name} & {n_atoms} & {n_iterations:d} & {time_ms_avg:.1f} ({time_ms_std:.1f})\\'.format(
+                r'{molecule_name} & {n_atoms} & {n_iterations:d} & {time_ms_avg:.1f} ({time_ms_std:.1f}) & {n_classes} \\'.format(
                     molecule_name=basename(test_pdb_file).replace('.pdb', ''),
                     time_ms_avg=mean(runtimes),
                     time_ms_std=std(runtimes),
                     n_atoms=len(mol_data.atoms),
                     n_iterations=int(mean(list_of_n_iterations)),
+                    n_classes=len(set([atom['equivalenceGroup'] for atom in mol_data.atoms.values()])),
                 )
             )
             print()
