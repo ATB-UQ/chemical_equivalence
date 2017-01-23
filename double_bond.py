@@ -1,4 +1,4 @@
-from typing import Any, Optional, List, Union, Tuple, Dict
+from typing import Optional, List, Union, Tuple, Dict
 from logging import Logger
 from functools import reduce
 
@@ -42,7 +42,7 @@ def contains_equivalence_breaking_double_bond(molData: MolData, flavourCounter: 
 
     return should_rerun
 
-def correct_symmetry(neighbours: Any, flavourCounter: FlavourCounter, log: Logger) -> bool:
+def correct_symmetry(neighbours: Dict[int, List[Atom]], flavourCounter: FlavourCounter, log: Logger) -> bool:
     neighbourListLeft, neighbourListRight = list(neighbours.values())
 
     # Try matching them two by two

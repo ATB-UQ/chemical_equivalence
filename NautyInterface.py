@@ -1,6 +1,6 @@
 import subprocess
 import tempfile
-from typing import Union, Any, Optional, List, Dict
+from typing import Union, Optional, List, Dict
 from itertools import groupby
 
 from chemical_equivalence.helpers.types_helpers import Logger
@@ -8,16 +8,18 @@ from chemical_equivalence.helpers.atoms import EQUIVALENCE_CLASS_KEY
 from chemical_equivalence.helpers.iterables import concat
 from chemical_equivalence.config import NAUTY_EXECUTABLE
 
+from atb_outputs.helpers.types_helpers import MolData
+
 atb_to_nauty = lambda x: (x - 1)
 nauty_to_atb = lambda x: (x + 1)
 
 LARGE_NUMBER = 1000
 
 class NautyInterface(object):
-    def __init__(self, molData: Any) -> None:
+    def __init__(self, molData: MolData) -> None:
         self.data = molData
 
-    def calcEquivGroups(self, log: Optional[Any] = None) -> Union[str, None]:
+    def calcEquivGroups(self, log: Optional[Logger] = None) -> Union[str, Dict[int, int]]:
         if log: log.debug("Running Nauty")
 
         nauty_stdout = _run(
@@ -30,15 +32,15 @@ class NautyInterface(object):
             if log is not None:
                 log.warning("calcEquivGroups: dreadnaut produced no output")
             return ""
+        else:
+            equivalence_for_atom = self.nauty_equivalence(nauty_stdout)
+            for atom_id in self.data.atoms.keys():
+                self.data.atoms[atom_id][EQUIVALENCE_CLASS_KEY] = equivalence_for_atom[atom_id]
 
-        equivalence_for_atom = self.nauty_equivalence(nauty_stdout)
-        for atom_id in self.data.atoms.keys():
-            self.data.atoms[atom_id][EQUIVALENCE_CLASS_KEY] = equivalence_for_atom[atom_id]
+            if log:
+                log.debug("Equivalence groups:\n{0}".format(self._getLogInfo(equivalence_for_atom)))
 
-        if log:
-            log.debug("Equivalence groups:\n{0}".format(self._getLogInfo(equivalence_for_atom)))
-
-        return equivalence_for_atom
+            return equivalence_for_atom
 
     def _getLogInfo(self, equivalence_dict: Dict[int, int]) -> str:
         return '\n'.join(
@@ -109,10 +111,10 @@ class NautyInterface(object):
         # atom_types is a dictionnary where keys are iacm or element type (ex:12 for C) and values are a list of matching atom indexes. 
         # Ex: {'12': [2, 4, 7, 10, 13, 16], '20': [1, 3, 5, 6, 8, 9, 11, 12, 14, 15, 17, 18]}
 
-        def atom_descriptor_key_for(atom: Dict[str, Any]) -> str:
+        def atom_descriptor_key_for(atom: Dict[str, Union[str, int, float]]) -> str:
             return 'iacm' if 'iacm' in atom else 'type'
 
-        def atom_descriptor_for(atom: Dict[str, Any]) -> str:
+        def atom_descriptor_for(atom: Dict[str, Union[str, int, float]]) -> str:
             base_atom_descriptor = str(atom[atom_descriptor_key_for(atom)])
 
             if "flavour" in atom:
@@ -143,7 +145,7 @@ class NautyInterface(object):
             ]
         )
 
-def _run(args: List[str], stdin: str, log: Optional[Any] = None) -> str:
+def _run(args: List[str], stdin: str, log: Optional[Logger] = None) -> str:
     tmp = tempfile.TemporaryFile(buffering=0)
     tmp.write(stdin.encode())
     tmp.seek(0)

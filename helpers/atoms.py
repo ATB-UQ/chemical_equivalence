@@ -1,7 +1,7 @@
-from typing import List, Any
+from typing import List
 from math import sqrt
 
-from chemical_equivalence.helpers.types_helpers import Atom, FlavourCounter
+from chemical_equivalence.helpers.types_helpers import Atom, FlavourCounter, MolData
 
 EQUIVALENCE_CLASS_KEY = 'equivalenceGroup'
 
@@ -49,7 +49,7 @@ def atom_distance(atom1: Atom, atom2: Atom) -> float:
     p1, p2 = atom1[coord_key], atom2[coord_key]
     return sqrt((p1[0] - p2[0])**2 + (p1[1] - p2[1])**2 + (p1[2] - p2[2])**2)
 
-def is_sterogenic_atom(atom: Atom, molData: Any) -> bool:
+def is_sterogenic_atom(atom: Atom, molData: MolData) -> bool:
     return is_sp3_atom(atom) and has_all_different_neighbours(atom, molData.atoms.values())
 
 def are_substituents(atom_1: Atom, atom_2: Atom) -> bool:
