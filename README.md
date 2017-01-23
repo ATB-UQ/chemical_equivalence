@@ -40,6 +40,7 @@ Please see the documentation of the `atb_outputs` module for further description
 
 * It can easily be mapped back to each atom by iterating over the atoms of the `MolData` object:
 
+```
 >>> list((atom['symbol'], equivalence_dict[atom['id']]) for atom in mol_data.atoms.values())
 [('H8', 0), ('C2', 1), ('Cl1', 2), ('C7', 3), ('H17', 4), ('H18', 5), ('C3', 6), ('H9', 7), ('H10', 8), ('C4', 9), ('H11', 10), ('H12', 11), ('C5', 12), ('H13', 13), ('H14', 14), ('C6', 15), ('H15', 16), ('H16', 17)]
 ```
