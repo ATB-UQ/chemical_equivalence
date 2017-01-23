@@ -9,7 +9,7 @@ Nauty can very easily be installed from [source](http://users.cecs.anu.edu.au/~b
 
 # Configuration
 
-* The `chemical_equivalence` expected both the `atb_outputs` and `chemical_equivalence` module to be in the `PYTHONPATH` variable of your shell.
+* The `chemical_equivalence` code expects both the `atb_outputs` and `chemical_equivalence` modules to be found in the `PYTHONPATH` variable of your shell.
 The easiest way to satisfy this requirement is to clone both projects in an `ATB` directory that is subsequently added to the `PYTHONPATH` of your current shell:
 
 ```
@@ -20,6 +20,16 @@ git clone git@github.com:bertrand-caron/chemical_equivalence.git
 git clone git@github.com:bertrand-caron/atb_outputs.git
 cd chemical_equivalence
 make test
+```
+
+* Incorrectly set up `PYTHONPATH` will lead to import errors:
+
+```
+$ PYTHONPATH='' python3 test.py # Empty PYTHONPATH for demonstration
+Traceback (most recent call last):
+  File "test.py", line 9, in <module>
+    from chemical_equivalence.calcChemEquivalency import getChemEquivGroups
+ImportError: No module named 'chemical_equivalence'
 ```
 
 * The code assumes that `dreadnaut` will be installed in `/usr/local/bin`. If installing in a different location, you can change the `NAUTY_EXECUTABLE` path in `config.py`.
