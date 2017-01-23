@@ -10,11 +10,11 @@ Nauty can very easily be installed from [source](http://users.cecs.anu.edu.au/~b
 # Configuration
 
 * The `chemical_equivalence` expected both the `atb_outputs` and `chemical_equivalence` module to be in the `PYTHONPATH` variable of your shell.
-The easiest way to satisfy this requirement is to clone both projects in an `ATB` directory as such:
+The easiest way to satisfy this requirement is to clone both projects in an `ATB` directory that is subsequently added to the `PYTHONPATH` of your current shell:
 
 ```
 mkdir ATB
-export PYTHONPATH="$PWD/ATB:$PYTHONPATH"
+export PYTHONPATH="$PWD/ATB:$PYTHONPATH" # For bash; users of other shells will adapt
 cd ATB
 git clone git@github.com:bertrand-caron/chemical_equivalence.git
 git clone git@github.com:bertrand-caron/atb_outputs.git
