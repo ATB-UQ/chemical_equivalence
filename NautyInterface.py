@@ -6,8 +6,7 @@ from itertools import groupby
 from chemical_equivalence.helpers.types_helpers import Logger
 from chemical_equivalence.helpers.atoms import EQUIVALENCE_CLASS_KEY
 from chemical_equivalence.helpers.iterables import concat
-
-NAUTY_EXECUTABLE = '/usr/local/bin/dreadnaut'
+from chemical_equivalence.config import NAUTY_EXECUTABLE
 
 atb_to_nauty = lambda x: (x - 1)
 nauty_to_atb = lambda x: (x + 1)
