@@ -3,12 +3,24 @@
 * Python `>=3.5`
 
 * ATB Outputs python module: `https://github.com/bertrand-caron/atb_outputs`
-The directory in which should be accesible by the `PYTHONPATH` variable of your shell.
 
 * Nauty: This modules relies on the `dreadnaut` executable which is part of the `nauty` package.
 Nauty can very easily be installed from [source](http://users.cecs.anu.edu.au/~bdm/nauty/) or using a package manager such as `homebrew` for Mac OS X users.
 
 # Configuration
+
+* The `chemical_equivalence` expected both the `atb_outputs` and `chemical_equivalence` module to be in the `PYTHONPATH` variable of your shell.
+The easiest way to satisfy this requirement is to clone both projects in an `ATB` directory as such:
+
+```
+mkdir ATB
+export PYTHONPATH="$PWD/ATB:$PYTHONPATH"
+cd ATB
+git clone git@github.com:bertrand-caron/chemical_equivalence.git
+git clone git@github.com:bertrand-caron/atb_outputs.git
+cd chemical_equivalence
+make test
+```
 
 * The code assumes that `dreadnaut` will be installed in `/usr/local/bin`. If installing in a different location, you can change the `NAUTY_EXECUTABLE` path in `config.py`.
 
