@@ -21,22 +21,28 @@ def atoms_with_indices(atoms: List[Atom], indices: List[int]) -> List[Atom]:
 def neighbouring_atoms(atom: Atom, atoms: List[Atom]) -> List[Atom]:
     return atoms_with_indices(atoms, atom['conn'])
 
-def is_sp2_carbon_atom(atom: Atom) -> bool:
-    return is_carbon(atom) and has_N_neighbours(atom, N=3)
+def is_sp2_C_or_N_atom(atom: Atom) -> bool:
+    return is_sp2_atom(atom) and is_element(atom, ['C', 'N'])
+
+def is_sp2_atom(atom: Atom) -> bool:
+    return has_N_neighbours(atom, N=3)
 
 def is_sp3_atom(atom: Atom) -> bool:
     return has_N_neighbours(atom, N=4)
 
-def is_bonded_to_sp2_carbon(atom: Atom, atoms: List[Atom]) -> bool:
+def is_bonded_to_sp2_C_or_N(atom: Atom, atoms: List[Atom]) -> bool:
     return any(
         [
-            is_sp2_carbon_atom(atoms[neighbourAtomID])
+            is_sp2_C_or_N_atom(atoms[neighbourAtomID])
             for neighbourAtomID in atom["conn"]
         ]
     )
 
 def is_carbon(atom: Atom) -> bool:
-    return atom["type"].upper() == "C"
+    return is_element(atom, ['C'])
+
+def is_element(atom: Atom, elements: List[str]) -> bool:
+    return atom["type"].upper() in elements
 
 def has_N_neighbours(atom: Atom, N: int) -> bool:
     return len(atom["conn"]) == N

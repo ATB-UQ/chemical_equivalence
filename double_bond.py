@@ -3,11 +3,11 @@ from logging import Logger
 from functools import reduce
 
 from chemical_equivalence.config import DOUBLE_BOND_LENGTH_CUTOFF
-from chemical_equivalence.helpers.atoms import are_atoms_chemically_equivalent, atom_names, atoms_with_indices, neighbouring_atoms, is_sp2_carbon_atom, is_carbon, is_bonded_to_sp2_carbon, atom_distance, flavour_atoms
+from chemical_equivalence.helpers.atoms import are_atoms_chemically_equivalent, atom_names, atoms_with_indices, neighbouring_atoms, is_sp2_C_or_N_atom, atom_distance, flavour_atoms
 from chemical_equivalence.helpers.types_helpers import Atom, FlavourCounter, MolData
 
 def contains_equivalence_breaking_double_bond(molData: MolData, flavourCounter: FlavourCounter, log: Optional[Logger] = None) -> bool:
-    connected_sp2_carbons = pairs_of_bonded_sp2_carbon_atoms(molData.atoms, log)
+    connected_sp2_carbons = pairs_of_bonded_sp2_C_or_N_atoms(molData.atoms, log)
 
     def should_rerun_for_carbon_pair(atom_pair: Tuple[Atom, Atom]) -> bool:
         (atom1, atom2) = atom_pair
@@ -83,7 +83,7 @@ def getNeighboursExcludingOne(atom: Atom, excludedAtom: Atom, molData: MolData) 
         if neighbourID != excludedAtom["index"]
     ]
 
-def pairs_of_bonded_sp2_carbon_atoms(atoms: Dict[int, Atom], log: Logger) -> List[Tuple[Atom, Atom]]:
+def pairs_of_bonded_sp2_C_or_N_atoms(atoms: Dict[int, Atom], log: Logger) -> List[Tuple[Atom, Atom]]:
     def canonise_pair(atom_1: Atom, atom_2: Atom) -> Tuple[Atom, Atom]:
         return tuple(
             sorted(
@@ -96,9 +96,12 @@ def pairs_of_bonded_sp2_carbon_atoms(atoms: Dict[int, Atom], log: Logger) -> Lis
         reduce(
             lambda acc, e: acc + e,
             [
-                [canonise_pair(sp2_atom_1, sp2_atom_2) for sp2_atom_2 in get_connected_sp2_carbon_atoms_of_greater_id(sp2_atom_1, atoms)]
+                [
+                    canonise_pair(sp2_atom_1, sp2_atom_2)
+                    for sp2_atom_2 in get_connected_sp2_C_or_N_atoms_of_greater_id(sp2_atom_1, atoms)
+                ]
                 for sp2_atom_1 in atoms.values()
-                if is_sp2_carbon_atom(sp2_atom_1)
+                if is_sp2_C_or_N_atom(sp2_atom_1)
             ],
             [],
         )
@@ -117,10 +120,10 @@ def pairs_of_bonded_sp2_carbon_atoms(atoms: Dict[int, Atom], log: Logger) -> Lis
 
     return pairs
 
-def get_connected_sp2_carbon_atoms_of_greater_id(atom: Atom, atoms: Dict[int, Atom]) -> List[Atom]:
+def get_connected_sp2_C_or_N_atoms_of_greater_id(atom: Atom, atoms: Dict[int, Atom]) -> List[Atom]:
     return list(
         filter(
-            lambda bonded_atom: is_sp2_carbon_atom(bonded_atom) and has_suitable_double_bond_length(atom, bonded_atom) and atom['id'] < bonded_atom['id'],
+            lambda bonded_atom: is_sp2_C_or_N_atom(bonded_atom) and has_suitable_double_bond_length(atom, bonded_atom) and atom['id'] < bonded_atom['id'],
             [
                 atoms[bonded_atom_id]
                 for bonded_atom_id in atom["conn"]
@@ -129,4 +132,4 @@ def get_connected_sp2_carbon_atoms_of_greater_id(atom: Atom, atoms: Dict[int, At
     )
 
 def has_suitable_double_bond_length(atom1: Atom, atom2: Atom) -> bool:
-    return (atom_distance(atom1, atom2) < DOUBLE_BOND_LENGTH_CUTOFF)
+    return (atom_distance(atom1, atom2) < DOUBLE_BOND_LENGTH_CUTOFF[frozenset([atom1['type'], atom2['type']])])

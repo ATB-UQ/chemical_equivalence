@@ -1,6 +1,10 @@
 from os.path import exists
 
-DOUBLE_BOND_LENGTH_CUTOFF = 0.138 #nm
+DOUBLE_BOND_LENGTH_CUTOFF = {
+    frozenset(['C', 'C']): 0.138, #nm
+    frozenset(['C', 'N']): float('inf'), #nm
+    frozenset(['N', 'N']): float('inf'), #nm
+}
 
 NAUTY_EXECUTABLE = '/usr/local/bin/dreadnaut'
 
