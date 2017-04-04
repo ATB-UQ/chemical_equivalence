@@ -32,11 +32,14 @@ def pair_of_stereo_heterotopic_atoms_for(atom: Atom, atoms: List[Atom]) -> List[
 def get_pairs_of_stereo_heterotopic_atoms(molData: MolData) -> List[Tuple[Atom, Atom]]:
     atoms = molData.atoms.values()
 
-    return [
-        pair_of_stereo_heterotopic_atoms_for(atom, atoms)
-        for atom in atoms
-        if is_sp3_atom(atom)
-    ]
+    return filter(
+        bool,
+        [
+            pair_of_stereo_heterotopic_atoms_for(atom, atoms)
+            for atom in atoms
+            if is_sp3_atom(atom)
+        ],
+    )
 
 def contains_stereo_heterotopic_atoms(molData: MolData, flavourCounter: FlavourCounter, log: Logger) -> bool:
     sterogenic_atoms = [
