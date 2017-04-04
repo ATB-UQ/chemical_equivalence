@@ -3,7 +3,7 @@ from logging import Logger
 from itertools import groupby
 
 from chemical_equivalence.helpers.types_helpers import Atom, MolData, FlavourCounter, Tuple
-from chemical_equivalence.helpers.atoms import is_sterogenic_atom, EQUIVALENCE_CLASS_KEY, are_substituents, neighbouring_atoms, flavour_atoms
+from chemical_equivalence.helpers.atoms import is_sterogenic_atom, EQUIVALENCE_CLASS_KEY, are_substituents, neighbouring_atoms, flavour_atoms, is_sp3_atom
 from chemical_equivalence.helpers.iterables import concat
 
 MINIMUM_IDENTICAL_NEIGHBOUR_COUNT_FOR_CHIRAL = 2
@@ -21,7 +21,11 @@ def pair_of_stereo_heterotopic_atoms_for(atom: Atom, atoms: List[Atom]) -> List[
     ]
 
     if sum([1 for group_of_atoms in groups_of_atoms if len(group_of_atoms) == MINIMUM_IDENTICAL_NEIGHBOUR_COUNT_FOR_CHIRAL]) == 1:
-        return [group_of_atoms for group_of_atoms in groups_of_atoms if len(group_of_atoms) == MINIMUM_IDENTICAL_NEIGHBOUR_COUNT_FOR_CHIRAL][0]
+        return [
+            group_of_atoms
+            for group_of_atoms in groups_of_atoms
+            if len(group_of_atoms) == MINIMUM_IDENTICAL_NEIGHBOUR_COUNT_FOR_CHIRAL
+        ][0]
     else:
         return []
 
@@ -31,6 +35,7 @@ def get_pairs_of_stereo_heterotopic_atoms(molData: MolData) -> List[Tuple[Atom, 
     return [
         pair_of_stereo_heterotopic_atoms_for(atom, atoms)
         for atom in atoms
+        if is_sp3_atom(atom)
     ]
 
 def contains_stereo_heterotopic_atoms(molData: MolData, flavourCounter: FlavourCounter, log: Logger) -> bool:
