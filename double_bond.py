@@ -7,9 +7,9 @@ from chemical_equivalence.helpers.atoms import are_atoms_chemically_equivalent, 
 from chemical_equivalence.helpers.types_helpers import Atom, FlavourCounter, MolData
 
 def contains_equivalence_breaking_double_bond(molData: MolData, flavourCounter: FlavourCounter, log: Optional[Logger] = None) -> bool:
-    connected_sp2_carbons = pairs_of_bonded_sp2_C_or_N_atoms(molData.atoms, log)
+    connected_sp2_atoms = pairs_of_bonded_sp2_C_or_N_atoms(molData.atoms, log)
 
-    def should_rerun_for_carbon_pair(atom_pair: Tuple[Atom, Atom]) -> bool:
+    def should_rerun_for_atom_pair(atom_pair: Tuple[Atom, Atom]) -> bool:
         (atom1, atom2) = atom_pair
         if log:
             log.debug('Found double bond that could disturb chemical equivalency: {0}'.format(atom_names([atom1, atom2])))
@@ -35,10 +35,10 @@ def contains_equivalence_breaking_double_bond(molData: MolData, flavourCounter: 
             should_rerun = False
         return should_rerun
 
-    if len(connected_sp2_carbons) == 0:
+    if len(connected_sp2_atoms) == 0:
         should_rerun = False
     else:
-        should_rerun = any([should_rerun_for_carbon_pair(atom_pair) for atom_pair in connected_sp2_carbons])
+        should_rerun = any([should_rerun_for_atom_pair(atom_pair) for atom_pair in connected_sp2_atoms])
 
     return should_rerun
 
@@ -108,7 +108,7 @@ def pairs_of_bonded_sp2_C_or_N_atoms(atoms: Dict[int, Atom], log: Logger) -> Lis
     )
     if log:
         log.debug(
-            "Found the following sp2 carbon atoms in a double bond: {0}".format(
+            "Found the following sp2 [C,N] atoms in a double bond: {0}".format(
                 " ".join(
                     [
                         "{0}=={1}".format(a1["symbol"], a2["symbol"])
