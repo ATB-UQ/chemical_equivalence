@@ -1,8 +1,9 @@
 from argparse import ArgumentParser, Namespace
-from typing import Optional, List, Dict, Tuple
+from typing import Optional, List, Dict, Tuple, Any
+from operator import itemgetter
 
 from chemical_equivalence.log_helpers import print_stderr
-from chemical_equivalence.NautyInterface import calcEquivGroups
+from chemical_equivalence.NautyInterface import calcEquivGroups, nauty_graph, nauty_output, get_partition_from_nauty_output, partition_for_chemical_equivalence_dict
 from chemical_equivalence.chiral import contains_stereo_heterotopic_atoms
 from chemical_equivalence.double_bond import contains_equivalence_breaking_double_bond
 from chemical_equivalence.rings import contains_inversable_rings
@@ -76,6 +77,32 @@ def partial_mol_data_for_pdbstr(pdb_string: str, united_atoms: bool = True, debu
             )
     return data
 
+def get_chemical_equivalence_accross(mol_datae: List[MolData]) -> Any:
+    chemical_equivalence_dicts = [
+        getChemEquivGroups(mol_data)[0]
+        for mol_data in mol_datae
+    ]
+
+    if len(mol_datae) == 2:
+        return get_partition_from_nauty_output(
+            nauty_output(
+                '{0} c x @ {1} x ##'.format(
+                    *[
+                        nauty_graph(
+                            mol_data,
+                            nauty_node_partition=partition_for_chemical_equivalence_dict(chemical_equivalence_dict),
+                        )
+                        for (mol_data, chemical_equivalence_dict) in
+                        zip(mol_datae, chemical_equivalence_dicts)
+                    ],
+                ),
+            ),
+        )
+    else:
+        raise Exception('Not supported yet')
+
+    return input_str
+
 if __name__ == '__main__':
     parser = ArgumentParser()
     parser.add_argument('--pdb', type=str, help='Main PDB file.', required=True)
@@ -92,9 +119,15 @@ if __name__ == '__main__':
     else:
         other_pdb_str = None
 
-    print(
-        getChemEquivGroups(
-            MolData(pdb_str),
-            other_mol_data=MolData(other_pdb_str) if other_pdb_str is not None else other_pdb_str,
-        ),
-    )
+    if other_pdb_str is None:
+        print(
+            getChemEquivGroups(
+                MolData(pdb_str),
+            ),
+        )
+    else:
+        print(
+            get_chemical_equivalence_accross(
+                list(map(MolData, [pdb_str, other_pdb_str])),
+            )
+        )

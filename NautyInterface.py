@@ -1,7 +1,8 @@
 import subprocess
 import tempfile
-from typing import Union, Optional, List, Dict
+from typing import Union, Optional, List, Dict, Tuple
 from itertools import groupby
+from operator import itemgetter
 
 from chemical_equivalence.helpers.types_helpers import Logger
 from chemical_equivalence.helpers.atoms import EQUIVALENCE_CLASS_KEY
@@ -15,6 +16,8 @@ nauty_to_atb = lambda x: (x + 1)
 
 LARGE_NUMBER = 1000
 
+Partition = Dict[int, List[int]]
+
 def nauty_edges(mol_data: MolData) -> str:
     return ''.join(
         [
@@ -23,32 +26,51 @@ def nauty_edges(mol_data: MolData) -> str:
         ]
     )
 
-def nauty_graph(mol_data: MolData) -> str:
+def nauty_graph(mol_data: MolData, nauty_node_partition: Optional[Partition] = None) -> str:
     return 'n={num_atoms} g {edges}.f=[{node_partition}]'.format(
         num_atoms=len(mol_data.atoms),
         edges=nauty_edges(mol_data),
-        node_partition=nauty_node_partition(mol_data),
+        node_partition=nauty_partition_str_for(get_partition_for(mol_data) if nauty_node_partition is None else nauty_node_partition)
     )
 
-def nauty_node_partition(mol_data: MolData) -> str:
-    # atom_types is a dictionnary where keys are iacm or element type (ex:12 for C) and values are a list of matching atom indexes. 
+def atom_descriptor_key_for(atom: Dict[str, Union[str, int, float]]) -> str:
+    return 'iacm' if 'iacm' in atom else 'type'
+
+def atom_descriptor_for(atom: Dict[str, Union[str, int, float]]) -> str:
+    base_atom_descriptor = str(atom[atom_descriptor_key_for(atom)])
+
+    if "flavour" in atom:
+        # Append flavour to the atom descriptor in order to distinguish between stereoheterotopic atoms.
+        # LARGE_NUMBER is chosen as a large number that is much greater than the 80 existing atom types
+        return ''.join([base_atom_descriptor, str(LARGE_NUMBER + atom["flavour"])])
+    else:
+        return base_atom_descriptor
+
+def nauty_partition_str_for(partition: Partition) -> str:
+    # Format it in dreadnaut's partition format. Ex: "1,2,3|4,5,6"
+    return '|'.join(
+        [
+            ','.join(map(str, indices))
+            for (_, indices) in sorted(partition.items())
+        ]
+    )
+
+def partition_for_chemical_equivalence_dict(chemical_equivalence_dict: Dict[int, int]) -> Partition:
+    return {
+        key: [atom_id for (atom_id, equivalence_class_id) in group]
+        for (key, group) in groupby(
+            sorted(
+                chemical_equivalence_dict.items(),
+                key=itemgetter(1)
+            ),
+            key=itemgetter(1),
+        )
+    }
+
+def get_partition_for(mol_data: MolData) -> Partition:
+    # A parition is a dictionnary where keys are iacm or element type (ex:12 for C) and values are a list of matching atom indexes. 
     # Ex: {'12': [2, 4, 7, 10, 13, 16], '20': [1, 3, 5, 6, 8, 9, 11, 12, 14, 15, 17, 18]}
-
-    def atom_descriptor_key_for(atom: Dict[str, Union[str, int, float]]) -> str:
-        return 'iacm' if 'iacm' in atom else 'type'
-
-    def atom_descriptor_for(atom: Dict[str, Union[str, int, float]]) -> str:
-        base_atom_descriptor = str(atom[atom_descriptor_key_for(atom)])
-
-        if "flavour" in atom:
-            # Append flavour to the atom descriptor in order to distinguish between stereoheterotopic atoms.
-            # LARGE_NUMBER is chosen as a large number that is much greater than the 80 existing atom types
-            return ''.join([base_atom_descriptor, str(LARGE_NUMBER + atom["flavour"])])
-        else:
-            return base_atom_descriptor
-
-    # Accumulate atom indexes
-    atom_types = dict(
+    return dict(
         [
             # Shift atom indexes by one to match dreadnaut's convention (starts at 0)
             # Atoms are sorted by key=atom_descriptor_for for canonical flovouring of the nauty nodes
@@ -60,35 +82,44 @@ def nauty_node_partition(mol_data: MolData) -> str:
         ]
     )
 
-    # Format it in dreadnaut's partition format. Ex: "1,2,3|4,5,6"
-    return '|'.join(
-        [
-            ','.join(map(str, indices))
-            for (_, indices) in sorted(atom_types.items())
-        ]
+def get_nauty_node_partition(mol_data: MolData) -> str:
+    return nauty_partition_str_for(
+        get_partition_for(mol_data),
     )
 
-def nauty_input(mol_data: MolData, log: Optional[Logger] = None, other_mol_data: Optional[MolData] = None) -> str:
-    if other_mol_data is None:
-        input_str = '{nauty_graph} xo'.format(
-            nauty_graph=nauty_graph(mol_data),
-        )
-    else:
-        input_str = '{nauty_graph_1} c x @ {nauty_graph_2} x ##'.format(
-            nauty_graph_1=nauty_graph(mol_data),
-            nauty_graph_2=nauty_graph(other_mol_data),
-        )
+def nauty_input(mol_data: MolData, log: Optional[Logger] = None) -> str:
+    input_str = '{nauty_graph} c xo'.format(
+        nauty_graph=nauty_graph(mol_data),
+    )
 
     if log:
         log.debug('Nauty input: {0}'.format(input_str))
 
     return input_str
 
+def nauty_output(nauty_input: str, log: Optional[Logger] = None) -> str:
+    nauty_stdout = _run(
+        [NAUTY_EXECUTABLE],
+        nauty_input,
+        log=log,
+    )
+
+    return nauty_stdout
+
+HAS_FOUND_ISOMORPHISM_MSG = "h and h' are identical."
+
+def get_partition_from_nauty_output(nauty_output: str) -> List[Tuple[int, int]]:
+    assert HAS_FOUND_ISOMORPHISM_MSG in nauty_output, nauty_output
+
+    return [
+        tuple(map(int, field.split('-')))
+        for field in nauty_output.split(HAS_FOUND_ISOMORPHISM_MSG)[1].strip().split()
+    ]
+
 def calcEquivGroups(mol_data: MolData, log: Optional[Logger] = None) -> Union[str, Dict[int, int]]:
     if log: log.debug("Running Nauty")
 
-    nauty_stdout = _run(
-        [NAUTY_EXECUTABLE],
+    nauty_stdout = nauty_output(
         nauty_input(mol_data, log=log),
         log=log,
     )
