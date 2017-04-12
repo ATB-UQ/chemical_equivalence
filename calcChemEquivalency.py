@@ -3,7 +3,7 @@ from typing import Optional, List, Dict, Tuple, Any
 from operator import itemgetter
 
 from chemical_equivalence.log_helpers import print_stderr
-from chemical_equivalence.NautyInterface import calcEquivGroups, nauty_graph, nauty_output, get_partition_from_nauty_output, partition_for_chemical_equivalence_dict
+from chemical_equivalence.NautyInterface import calcEquivGroups, nauty_graph, nauty_output, get_partition_from_nauty_output, partition_for_chemical_equivalence_dict, Partition
 from chemical_equivalence.chiral import contains_stereo_heterotopic_atoms
 from chemical_equivalence.double_bond import contains_equivalence_breaking_double_bond
 from chemical_equivalence.rings import contains_inversable_rings
@@ -77,7 +77,7 @@ def partial_mol_data_for_pdbstr(pdb_string: str, united_atoms: bool = True, debu
             )
     return data
 
-def get_chemical_equivalence_accross(mol_datae: List[MolData]) -> Any:
+def get_chemical_equivalence_accross(mol_datae: List[MolData]) -> List[Partition]:
     chemical_equivalence_dicts = [
         getChemEquivGroups(mol_data)[0]
         for mol_data in mol_datae
@@ -105,6 +105,7 @@ if __name__ == '__main__':
     parser = ArgumentParser()
     parser.add_argument('--pdb', type=str, help='Main PDB file.', required=True)
     parser.add_argument('--other-pdbs', nargs='*', default=[], help='Other PDB files.')
+    parser.add_argument('--index-starts-at', type=int, default=1, help='')
 
     args = parser.parse_args()
 
@@ -123,8 +124,15 @@ if __name__ == '__main__':
             ),
         )
     else:
+        translate_partition = lambda partition: [(x + args.index_starts_at, y + args.index_starts_at) for (x, y) in partition]
+
         print(
-            get_chemical_equivalence_accross(
-                list(map(MolData, [pdb_str] + other_pdb_strs)),
+            list(
+                map(
+                    translate_partition,
+                    get_chemical_equivalence_accross(
+                        list(map(MolData, [pdb_str] + other_pdb_strs)),
+                    ),
+                ),
             )
         )
