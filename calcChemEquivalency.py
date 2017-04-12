@@ -83,43 +83,40 @@ def get_chemical_equivalence_accross(mol_datae: List[MolData]) -> Any:
         for mol_data in mol_datae
     ]
 
-    if len(mol_datae) == 2:
-        return get_partition_from_nauty_output(
+    return [
+        get_partition_from_nauty_output(
             nauty_output(
                 '{0} c x @ {1} x ##'.format(
-                    *[
-                        nauty_graph(
-                            mol_data,
-                            nauty_node_partition=partition_for_chemical_equivalence_dict(chemical_equivalence_dict),
-                        )
-                        for (mol_data, chemical_equivalence_dict) in
-                        zip(mol_datae, chemical_equivalence_dicts)
-                    ],
+                    nauty_graph(
+                        mol_datae[0],
+                        nauty_node_partition=partition_for_chemical_equivalence_dict(chemical_equivalence_dicts[0]),
+                    ),
+                    nauty_graph(
+                        other_mol_data,
+                        nauty_node_partition=partition_for_chemical_equivalence_dict(other_chemical_equivalence_dict),
+                    ),
                 ),
             ),
         )
-    else:
-        raise Exception('Not supported yet')
-
-    return input_str
+        for (other_mol_data, other_chemical_equivalence_dict) in list(zip(mol_datae, chemical_equivalence_dicts))[1:]
+    ]
 
 if __name__ == '__main__':
     parser = ArgumentParser()
     parser.add_argument('--pdb', type=str, help='Main PDB file.', required=True)
-    parser.add_argument('--other-pdb', type=str, default=None, help='Other PDB file.')
+    parser.add_argument('--other-pdbs', nargs='*', default=[], help='Other PDB files.')
 
     args = parser.parse_args()
 
     with open(args.pdb, "r") as fh:
         pdb_str = fh.read()
 
-    if args.other_pdb is not None:
-        with open(args.other_pdb, "r") as fh:
-            other_pdb_str = fh.read()
-    else:
-        other_pdb_str = None
+    other_pdb_strs = [
+        open(other_pdb, "r").read()
+        for other_pdb in args.other_pdbs
+    ]
 
-    if other_pdb_str is None:
+    if len(other_pdb_strs) == 0:
         print(
             getChemEquivGroups(
                 MolData(pdb_str),
@@ -128,6 +125,6 @@ if __name__ == '__main__':
     else:
         print(
             get_chemical_equivalence_accross(
-                list(map(MolData, [pdb_str, other_pdb_str])),
+                list(map(MolData, [pdb_str] + other_pdb_strs)),
             )
         )
