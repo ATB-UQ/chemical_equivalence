@@ -2,7 +2,7 @@ from optparse import OptionParser
 from typing import Optional, List, Dict, Tuple
 
 from chemical_equivalence.log_helpers import print_stderr
-from chemical_equivalence.NautyInterface import NautyInterface
+from chemical_equivalence.NautyInterface import calcEquivGroups
 from chemical_equivalence.chiral import contains_stereo_heterotopic_atoms
 from chemical_equivalence.double_bond import contains_equivalence_breaking_double_bond
 from chemical_equivalence.rings import contains_inversable_rings
@@ -18,8 +18,7 @@ EXCEPTION_SEARCHING_FUNCTIONS = [
 ]
 
 def getChemEquivGroups(molData: MolData, log: Optional[Logger] = None, correct_symmetry: bool = True) -> Tuple[Dict[int, int], int]:
-    nautyInterface = NautyInterface(molData)
-    equivalence_dict = nautyInterface.calcEquivGroups(log)
+    equivalence_dict = calcEquivGroups(molData, log)
 
     n_iterations = 0
 
@@ -30,7 +29,7 @@ def getChemEquivGroups(molData: MolData, log: Optional[Logger] = None, correct_s
         while correct_chemical_equivalence_exceptions(molData, flavourCounter, log):
             n_iterations += 1
             clearEqGroupData(molData)
-            equivalence_dict = nautyInterface.calcEquivGroups(log)
+            equivalence_dict = calcEquivGroups(molData, log)
 
     return (equivalence_dict, n_iterations)
 
@@ -99,10 +98,6 @@ def parseCommandline() -> None:
             parser.print_help()
             return
 
-    data = MolData(pdbStr)
+    mol_data = MolData(pdbStr)
 
-    nautyInterface = NautyInterface(data)
-
-    # Run symmetrization
-    #nautyInterface.calcSym()
-    #print(nautyInterface.data.equivalenceGroups)
+    print(getChemEquivGroups(mol_data))
