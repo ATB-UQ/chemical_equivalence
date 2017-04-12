@@ -1,4 +1,4 @@
-from optparse import OptionParser
+from argparse import ArgumentParser, Namespace
 from typing import Optional, List, Dict, Tuple
 
 from chemical_equivalence.log_helpers import print_stderr
@@ -17,7 +17,7 @@ EXCEPTION_SEARCHING_FUNCTIONS = [
     contains_inversable_rings,
 ]
 
-def getChemEquivGroups(molData: MolData, log: Optional[Logger] = None, correct_symmetry: bool = True) -> Tuple[Dict[int, int], int]:
+def getChemEquivGroups(molData: MolData, log: Optional[Logger] = None, correct_symmetry: bool = True, other_mol_data: Optional[MolData] = None) -> Tuple[Dict[int, int], int]:
     equivalence_dict = calcEquivGroups(molData, log)
 
     n_iterations = 0
@@ -76,28 +76,25 @@ def partial_mol_data_for_pdbstr(pdb_string: str, united_atoms: bool = True, debu
             )
     return data
 
-def parseCommandline() -> None:
-    # run CGP and symmetrization from commandline arguments
-    parser = OptionParser(usage="python %prog options filename [options [filename]]")
-    # required
-    parser.add_option("-p", "--pdb", dest="pdb", help="PDB structure file", action="store", type="string")
+if __name__ == '__main__':
+    parser = ArgumentParser()
+    parser.add_argument('--pdb', type=str, help='Main PDB file.', required=True)
+    parser.add_argument('--other-pdb', type=str, default=None, help='Other PDB file.')
 
-    (opts, _) = parser.parse_args()
+    args = parser.parse_args()
 
-    if not opts.pdb or not opts.mtb:
-        parser.print_help()
+    with open(args.pdb, "r") as fh:
+        pdb_str = fh.read()
+
+    if args.other_pdb is not None:
+        with open(args.other_pdb, "r") as fh:
+            other_pdb_str = fh.read()
     else:
-        # Try and open pdb file
-        try:
-            fh = open(opts.pdb, "r")
-            pdbStr = fh.read()
-            fh.close()
+        other_pdb_str = None
 
-        except:
-            print_stderr("ERROR: there was a problem with the PDB file.")
-            parser.print_help()
-            return
-
-    mol_data = MolData(pdbStr)
-
-    print(getChemEquivGroups(mol_data))
+    print(
+        getChemEquivGroups(
+            MolData(pdb_str),
+            other_mol_data=MolData(other_pdb_str) if other_pdb_str is not None else other_pdb_str,
+        ),
+    )

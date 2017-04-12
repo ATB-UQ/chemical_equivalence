@@ -126,11 +126,15 @@ def nauty_equivalence_dict(nauty_stdout: str) -> Dict[int, int]:
             group_fields = group_str.split()
         return concat([eval_group_field(group_field) for group_field in group_fields])
 
-    equivalence_groups = [
-        eval_group_str(group_str)
-        for group_str in orbital_data.split(";")
-        if group_str
-    ]
+    try:
+        equivalence_groups = [
+            eval_group_str(group_str)
+            for group_str in orbital_data.split(";")
+            if group_str
+        ]
+    except:
+        print(orbital_data)
+        raise
 
     equivalence_for_atom = dict(
         concat(
