@@ -1,6 +1,6 @@
 from argparse import ArgumentParser, Namespace
 from typing import Optional, List, Dict, Tuple, Any
-from operator import itemgetter
+from itertools import groupby
 
 from chemical_equivalence.log_helpers import print_stderr
 from chemical_equivalence.NautyInterface import calcEquivGroups, nauty_graph, nauty_output, get_partition_from_nauty_output, partition_for_chemical_equivalence_dict, Partition
@@ -33,6 +33,24 @@ def getChemEquivGroups(molData: MolData, log: Optional[Logger] = None, correct_s
             equivalence_dict = calcEquivGroups(molData, log)
 
     return (equivalence_dict, n_iterations)
+
+def atomic_equivalence_dict_to_group_equivalence_dict(atomic_equivalence_dict: Dict[int, int]) -> Dict[int, List[int]]:
+    on_equivalence_group_id = itemgetter(1)
+    get_atom_id = itemgetter(0)
+
+    return {
+        equivalence_group_id: [
+            get_atom_id(item) for item in group
+        ]
+        for (equivalence_group_id, group) in
+        groupby(
+            sorted(
+                atomic_equivalence_dict.items(),
+                key=on_equivalence_group_id,
+            ),
+            key=on_equivalence_group_id,
+        )
+    }
 
 def correct_chemical_equivalence_exceptions(molData: MolData, flavourCounter: FlavourCounter, log: Logger, exception_searching_functions: List[Exception_Searching_Function] = EXCEPTION_SEARCHING_FUNCTIONS) -> bool:
     # If there is a chemical equivalence breaking groups then should_rerun = True
