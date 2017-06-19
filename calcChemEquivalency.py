@@ -1,6 +1,7 @@
 from argparse import ArgumentParser, Namespace
 from typing import Optional, List, Dict, Tuple, Any
 from itertools import groupby
+from operator import itemgetter
 
 from chemical_equivalence.log_helpers import print_stderr
 from chemical_equivalence.NautyInterface import calcEquivGroups, nauty_graph, nauty_output, get_partition_from_nauty_output, partition_for_chemical_equivalence_dict, Partition
