@@ -13,13 +13,21 @@ from chemical_equivalence.helpers.atoms import EQUIVALENCE_CLASS_KEY
 
 from atb_outputs.mol_data import MolDataFailure
 
-EXCEPTION_SEARCHING_FUNCTIONS = [
-    contains_stereo_heterotopic_atoms,
-    contains_equivalence_breaking_double_bond,
-    contains_inversable_rings,
-]
+EXCEPTION_SEARCHING_FUNCTIONS = {
+    'chiral_centers': contains_stereo_heterotopic_atoms,
+    'double_bonds': contains_equivalence_breaking_double_bond,
+    'inversable_rings': contains_inversable_rings,
+}
 
-def getChemEquivGroups(molData: MolData, log: Optional[Logger] = None, correct_symmetry: bool = True, other_mol_data: Optional[MolData] = None) -> Tuple[Dict[int, int], int]:
+ALL_EXCEPTION_SEARCHING_KEYWORDS = list(EXCEPTION_SEARCHING_FUNCTIONS)
+
+def getChemEquivGroups(
+    molData: MolData,
+    log: Optional[Logger] = None,
+    correct_symmetry: bool = True,
+    other_mol_data: Optional[MolData] = None,
+    exception_searching_keywords: List[str] = ALL_EXCEPTION_SEARCHING_KEYWORDS,
+) -> Tuple[Dict[int, int], int]:
     equivalence_dict = calcEquivGroups(molData, log)
 
     n_iterations = 0
@@ -28,7 +36,7 @@ def getChemEquivGroups(molData: MolData, log: Optional[Logger] = None, correct_s
         # For cases with non-equivalent atoms we need to add flavour (some additional degree of freedom)
         # to distinguish them
         flavourCounter = FlavourCounter()
-        while correct_chemical_equivalence_exceptions(molData, flavourCounter, log):
+        while correct_chemical_equivalence_exceptions(molData, flavourCounter, log, exception_searching_keywords=exception_searching_keywords):
             n_iterations += 1
             clearEqGroupData(molData)
             equivalence_dict = calcEquivGroups(molData, log)
@@ -53,12 +61,17 @@ def atomic_equivalence_dict_to_group_equivalence_dict(atomic_equivalence_dict: D
         )
     }
 
-def correct_chemical_equivalence_exceptions(molData: MolData, flavourCounter: FlavourCounter, log: Logger, exception_searching_functions: List[Exception_Searching_Function] = EXCEPTION_SEARCHING_FUNCTIONS) -> bool:
+def correct_chemical_equivalence_exceptions(
+    molData: MolData,
+    flavourCounter: FlavourCounter,
+    log: Logger,
+    exception_searching_keywords: List[str] = ALL_EXCEPTION_SEARCHING_KEYWORDS,
+) -> bool:
     # If there is a chemical equivalence breaking groups then should_rerun = True
     should_rerun = any(
         [
-            exception_searching_function(molData, flavourCounter, log)
-            for exception_searching_function in exception_searching_functions
+            EXCEPTION_SEARCHING_FUNCTIONS[exception_searching_keyword](molData, flavourCounter, log)
+            for exception_searching_keyword in exception_searching_keywords
         ]
     )
 
@@ -75,11 +88,16 @@ def clearEqGroupData(molData: MolData) -> None:
     for atom in list(molData.atoms.values()):
         del atom[EQUIVALENCE_CLASS_KEY]
 
-def partial_mol_data_for_pdbstr(pdb_string: str, united_atoms: bool = True, debug: bool = False) -> MolData:
+def partial_mol_data_for_pdbstr(
+    pdb_string: str,
+    united_atoms: bool = True,
+    debug: bool = False,
+    exception_searching_keywords: List[str] = ALL_EXCEPTION_SEARCHING_KEYWORDS,
+) -> MolData:
     assert pdb_string, 'Empty PDB string'
 
     data = MolData(pdb_string)
-    getChemEquivGroups(data)
+    getChemEquivGroups(data, exception_searching_keywords=exception_searching_keywords)
     if united_atoms:
         if debug:
             print_stderr(
