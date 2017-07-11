@@ -114,7 +114,7 @@ def partial_mol_data_for_pdbstr(
             )
     return data
 
-def get_chemical_equivalence_accross(mol_datae: List[MolData]) -> List[Partition]:
+def get_chemical_equivalence_accross(mol_datae: List[MolData], correct_symmetry: bool) -> List[Partition]:
     chemical_equivalence_dicts = [
         getChemEquivGroups(mol_data)[0]
         for mol_data in mol_datae
@@ -143,6 +143,7 @@ if __name__ == '__main__':
     parser.add_argument('--pdb', type=str, help='Main PDB file.', required=True)
     parser.add_argument('--other-pdbs', nargs='*', default=[], help='Other PDB files.')
     parser.add_argument('--index-starts-at', type=int, default=1, help='')
+    parser.add_argument('--disable-symmetry', action='store_true', help='Disable symmetry correction'),
 
     args = parser.parse_args()
 
@@ -158,6 +159,7 @@ if __name__ == '__main__':
         print(
             getChemEquivGroups(
                 MolData(pdb_str),
+                correct_symmetry=not args.disable_symmetry,
             ),
         )
     else:
@@ -169,6 +171,7 @@ if __name__ == '__main__':
                     translate_partition,
                     get_chemical_equivalence_accross(
                         list(map(MolData, [pdb_str] + other_pdb_strs)),
+                        not args.disable_symmetry,
                     ),
                 ),
             )
