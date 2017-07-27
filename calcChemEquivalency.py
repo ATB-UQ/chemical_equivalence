@@ -93,10 +93,11 @@ def partial_mol_data_for_pdbstr(
     united_atoms: bool = True,
     debug: bool = False,
     exception_searching_keywords: List[str] = ALL_EXCEPTION_SEARCHING_KEYWORDS,
+    enforce_single_molecule: bool = True,
 ) -> MolData:
     assert pdb_string, 'Empty PDB string'
 
-    data = MolData(pdb_string)
+    data = MolData(pdb_string, enforce_single_molecule=enforce_single_molecule)
     getChemEquivGroups(data, exception_searching_keywords=exception_searching_keywords)
     if united_atoms:
         if debug:
