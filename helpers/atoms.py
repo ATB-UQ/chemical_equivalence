@@ -47,7 +47,7 @@ def is_element(atom: Atom, elements: List[str]) -> bool:
     return atom["type"].upper() in elements
 
 def has_N_neighbours(atom: Atom, N: int) -> bool:
-    return len(atom["conn"]) == N
+    return "conn" in atom and len(atom["conn"]) == N
 
 def are_neighbours(atom1: Atom, atom2: Atom) -> bool:
     return any([True for atom_id in atom1['conn'] if atom2["id"] == atom_id])
