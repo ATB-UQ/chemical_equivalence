@@ -2,6 +2,13 @@ PYTHON_BIN_DIR = /usr/local/python35/bin
 
 PYTHON_EXEC = PYTHONPATH=$(PYTHONPATH) $(PYTHON_BIN_DIR)/python3
 
+all: config_file
+
+config_file: config.yml
+
+config.yml: config.yml.example
+	cp $< $@
+
 vimdiff: refactor.log
 	vimdiff reference.log $<
 
