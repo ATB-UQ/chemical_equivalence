@@ -16,16 +16,16 @@ def contains_equivalence_breaking_double_bond(molData: MolData, flavourCounter: 
 
         # Get the neighbouring atoms to atom1 and atom2, excluding eachother
         neighbours = {
-            atom1["index"]: getNeighboursExcludingOne(atom1, atom2, molData),
-            atom2["index"]: getNeighboursExcludingOne(atom2, atom1, molData),
+            atom1["id"]: getNeighboursExcludingOne(atom1, atom2, molData),
+            atom2["id"]: getNeighboursExcludingOne(atom2, atom1, molData),
         }
 
         if log:
             log.debug("    Double bond neighbourhood: ({atom1Neighbours})--{atom1}={atom2}--({atom2Neighbours})".format(
                 atom1=atom1["symbol"],
                 atom2=atom2["symbol"],
-                atom1Neighbours=",".join([n["symbol"] for n in neighbours[atom1["index"]]]),
-                atom2Neighbours=",".join([n["symbol"] for n in neighbours[atom2["index"]]]),
+                atom1Neighbours=",".join([n["symbol"] for n in neighbours[atom1["id"]]]),
+                atom2Neighbours=",".join([n["symbol"] for n in neighbours[atom2["id"]]]),
             ))
 
         requires_rerun = correct_symmetry(neighbours, flavourCounter, log)
@@ -80,7 +80,7 @@ def getNeighboursExcludingOne(atom: Atom, excludedAtom: Atom, molData: MolData) 
     return [
         molData.atoms[neighbourID]
         for neighbourID in atom["conn"]
-        if neighbourID != excludedAtom["index"]
+        if neighbourID != excludedAtom["id"]
     ]
 
 def pairs_of_bonded_sp2_C_or_N_atoms(atoms: Dict[int, Atom], log: Logger) -> List[Tuple[Atom, Atom]]:
