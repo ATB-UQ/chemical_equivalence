@@ -46,7 +46,7 @@ def contains_inversable_rings(molData: MolData, flavourCounter: FlavourCounter, 
 
 def get_ring_substituents(node: Atom, atoms: List[Atom], ring_atoms: List[Atom]) -> List[Atom]:
     neighbours = neighbouring_atoms(node, atoms)
-    return [neighbour for neighbour in neighbours if neighbour['index'] not in [x['index'] for x in ring_atoms] ]
+    return [neighbour for neighbour in neighbours if neighbour['id'] not in [x['id'] for x in ring_atoms] ]
 
 def has_different_substituent(node: Atom, atoms: List[Atom], ring_atoms: List[Atom]) -> bool:
     # First, get out the two ring members from the node neighbours

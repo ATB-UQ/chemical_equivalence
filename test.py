@@ -42,7 +42,7 @@ def run_tests(log: Optional[Logger], correct_symmetry: bool = True) -> None:
 
             if i == 0:
                 print(list(mol_data.equivalenceGroups.values()), file=stdout)
-                print("\n".join([str((atom["index"], atom[EQUIVALENCE_CLASS_KEY])) for atom in list(mol_data.atoms.values())]), file=stdout)
+                print("\n".join([str((atom["id"], atom[EQUIVALENCE_CLASS_KEY])) for atom in list(mol_data.atoms.values())]), file=stdout)
                 print('', file=stdout)
 
                 molecule_graph, pos = graph_for_test[test_pdb_file] if (test_pdb_file in graph_for_test and CACHE_GRAPH_POS) else (None, None)
