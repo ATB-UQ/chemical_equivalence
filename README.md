@@ -4,41 +4,20 @@
 
 * Python `>=3.5`
 
-* ATB Outputs python module: `https://github.com/bertrand-caron/atb_outputs`
+* ATB Outputs python module: `https://github.com/ATB-UQ/atb_outputs.git
 
 * Nauty: This modules relies on the `dreadnaut` executable which is part of the `nauty` package.
 Nauty can very easily be installed from [source](http://users.cecs.anu.edu.au/~bdm/nauty/) or using a package manager such as `homebrew` for Mac OS X users.
 
 # Configuration
 
-* The `chemical_equivalence` code expects both the `atb_outputs` and `chemical_equivalence` modules to be found in the `PYTHONPATH` variable of your shell.
-The easiest way to satisfy this requirement is to clone both projects in an `ATB` directory that is subsequently added to the `PYTHONPATH` of your current shell:
-
-```
-mkdir ATB
-export PYTHONPATH="$PWD/ATB:$PYTHONPATH" # For bash; users of other shells will adapt
-cd ATB
-git clone git@github.com:bertrand-caron/chemical_equivalence.git
-git clone git@github.com:bertrand-caron/atb_outputs.git
-cd chemical_equivalence
-make test
-```
-
-* Incorrectly set up `PYTHONPATH` will lead to import errors:
-
-```
-$ PYTHONPATH='' python3 test.py # Empty PYTHONPATH for demonstration
-Traceback (most recent call last):
-  File "test.py", line 9, in <module>
-    from chemical_equivalence.calcChemEquivalency import getChemEquivGroups
-ImportError: No module named 'chemical_equivalence'
-```
-
 * The code assumes that `dreadnaut` will be installed in `/usr/local/bin`. If installing in a different location, you can change the `NAUTY_EXECUTABLE` path in `config.py`.
 
 # Usage
 
-The `test.py` script contains code to run the chemical equivalence prediction algorithm on a series of test cases found in the `testing/` directory.
+A simple example is included in `examples/test.py`
+
+For more comprehensive examples see the `src/chemical_equivalence/test.py` script which contains code to run the chemical equivalence prediction algorithm on a series of test cases found in the `testing/` directory.
 
  * First, a `MolData` (Molecule Data) object has to be initialised. It describes the topology and coordinate of the molecule.
 Please see the documentation of the `atb_outputs` module for further description of the `MolData` object.
