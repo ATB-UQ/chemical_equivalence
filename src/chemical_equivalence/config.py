@@ -11,7 +11,7 @@ THIS_DIR = dirname(abspath(__file__))
 YAML_CONFIG_FILE = join(THIS_DIR, "config.yml")
 
 if not exists(YAML_CONFIG_FILE):
-    raise Exception("config.yml file not found, modify config.yml.example file change it's name to config.yml")
+    raise Exception(f"{YAML_CONFIG_FILE} file not found, modify config.yml.example file change it's name to config.yml")
 
 with open(YAML_CONFIG_FILE) as fp:
     yaml_config = yaml.load(fp, Loader=yaml.FullLoader)
