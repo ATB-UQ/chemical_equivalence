@@ -4,7 +4,7 @@ from itertools import groupby
 from operator import itemgetter
 
 from chemical_equivalence.log_helpers import print_stderr
-from chemical_equivalence.NautyInterface import calcEquivGroups, nauty_graph, nauty_output, get_partition_from_nauty_output, partition_for_chemical_equivalence_dict, Partition
+from chemical_equivalence.NautyInterface import calcEquivGroups, nauty_graph, generate_nauty_output_from_inputstr, get_partition_from_nauty_output, partition_for_chemical_equivalence_dict, Partition
 from chemical_equivalence.chiral import contains_stereo_heterotopic_atoms
 from chemical_equivalence.double_bond import contains_equivalence_breaking_double_bond
 from chemical_equivalence.rings import contains_inversable_rings
@@ -123,7 +123,7 @@ def get_chemical_equivalence_accross(mol_datae: List[MolData], correct_symmetry:
 
     return [
         get_partition_from_nauty_output(
-            nauty_output(
+            generate_nauty_output_from_inputstr(
                 '{0} c x @ {1} x ##'.format(
                     nauty_graph(
                         mol_datae[0],

@@ -18,7 +18,8 @@ LARGE_NUMBER = 1000
 
 Partition = Dict[int, List[int]]
 
-def nauty_edges(mol_data: MolData) -> str:
+
+def generate_nauty_edges_str(mol_data: MolData) -> str:
     return ''.join(
         [
             "{0}:{1};".format(*[atb_to_nauty(index) for index in bond['atoms']])
@@ -26,15 +27,19 @@ def nauty_edges(mol_data: MolData) -> str:
         ]
     )
 
+
 def nauty_graph(mol_data: MolData, nauty_node_partition: Optional[Partition] = None) -> str:
     return 'n={num_atoms} g {edges}.f=[{node_partition}]'.format(
         num_atoms=len(mol_data.atoms),
-        edges=nauty_edges(mol_data),
-        node_partition=nauty_partition_str_for(get_partition_for(mol_data) if nauty_node_partition is None else nauty_node_partition)
+        edges=generate_nauty_edges_str(mol_data),
+        node_partition=nauty_partition_str_for(
+            get_partition_for(mol_data) if nauty_node_partition is None else nauty_node_partition)
     )
+
 
 def atom_descriptor_key_for(atom: Dict[str, Union[str, int, float]]) -> str:
     return 'iacm' if 'iacm' in atom else 'type'
+
 
 def atom_descriptor_for(atom: Dict[str, Union[str, int, float]]) -> str:
     base_atom_descriptor = str(atom[atom_descriptor_key_for(atom)])
@@ -46,6 +51,7 @@ def atom_descriptor_for(atom: Dict[str, Union[str, int, float]]) -> str:
     else:
         return base_atom_descriptor
 
+
 def nauty_partition_str_for(partition: Partition) -> str:
     # Format it in dreadnaut's partition format. Ex: "1,2,3|4,5,6"
     return '|'.join(
@@ -54,6 +60,7 @@ def nauty_partition_str_for(partition: Partition) -> str:
             for (_, indices) in sorted(partition.items())
         ]
     )
+
 
 def partition_for_chemical_equivalence_dict(chemical_equivalence_dict: Dict[int, int]) -> Partition:
     return {
@@ -67,27 +74,28 @@ def partition_for_chemical_equivalence_dict(chemical_equivalence_dict: Dict[int,
         )
     }
 
+
 def get_partition_for(mol_data: MolData) -> Partition:
     # A parition is a dictionnary where keys are iacm or element type (ex:12 for C) and values are a list of matching atom indexes. 
     # Ex: {'12': [2, 4, 7, 10, 13, 16], '20': [1, 3, 5, 6, 8, 9, 11, 12, 14, 15, 17, 18]}
-    return dict(
-        [
-            # Shift atom indexes by one to match dreadnaut's convention (starts at 0)
-            # Atoms are sorted by key=atom_descriptor_for for canonical flovouring of the nauty nodes
-            (group_key, [atb_to_nauty(atom['id']) for atom in group_iterator])
-            for (group_key, group_iterator) in groupby(
-                sorted(mol_data.atoms.values(), key=atom_descriptor_for),
-                key=atom_descriptor_for,
-            )
-        ]
-    )
+    return {
+        # Shift atom indexes by one to match dreadnaut's convention (starts at 0)
+        # Atoms are sorted by key=atom_descriptor_for for canonical flovouring of the nauty nodes
+        group_key: [atb_to_nauty(atom['id']) for atom in group_iterator]
+        for (group_key, group_iterator) in groupby(
+            sorted(mol_data.atoms.values(), key=atom_descriptor_for),
+            key=atom_descriptor_for,
+        )
+    }
+
 
 def get_nauty_node_partition(mol_data: MolData) -> str:
     return nauty_partition_str_for(
         get_partition_for(mol_data),
     )
 
-def nauty_input(mol_data: MolData, log: Optional[Logger] = None) -> str:
+
+def generate_nauty_input_from_moldata(mol_data: MolData, log: Optional[Logger] = None) -> str:
     input_str = '{nauty_graph} c xo'.format(
         nauty_graph=nauty_graph(mol_data),
     )
@@ -97,30 +105,35 @@ def nauty_input(mol_data: MolData, log: Optional[Logger] = None) -> str:
 
     return input_str
 
-def nauty_output(nauty_input: str, log: Optional[Logger] = None) -> str:
+
+def generate_nauty_output_from_inputstr(nauty_input_str: str, log: Optional[Logger] = None) -> str:
     nauty_stdout = _run(
         [NAUTY_EXECUTABLE],
-        nauty_input,
+        nauty_input_str,
         log=log,
     )
 
     return nauty_stdout
 
+
 HAS_FOUND_ISOMORPHISM_MSG = "h and h' are identical."
 
-def get_partition_from_nauty_output(nauty_output: str) -> List[Tuple[int, int]]:
-    assert HAS_FOUND_ISOMORPHISM_MSG in nauty_output, nauty_output
+
+def get_partition_from_nauty_output(nauty_output_str: str) -> list[tuple[int, ...]]:
+    assert HAS_FOUND_ISOMORPHISM_MSG in nauty_output_str, nauty_output_str
 
     return [
         tuple(map(int, field.split('-')))
-        for field in nauty_output.split(HAS_FOUND_ISOMORPHISM_MSG)[1].strip().split()
+        for field in nauty_output_str.split(HAS_FOUND_ISOMORPHISM_MSG)[1].strip().split()
     ]
 
-def calcEquivGroups(mol_data: MolData, log: Optional[Logger] = None) -> Union[str, Dict[int, int]]:
-    if log: log.debug("Running Nauty")
 
-    nauty_stdout = nauty_output(
-        nauty_input(mol_data, log=log),
+def calcEquivGroups(mol_data: MolData, log: Optional[Logger] = None) -> Union[str, Dict[int, int]]:
+    if log:
+        log.debug("Running Nauty")
+
+    nauty_stdout = generate_nauty_output_from_inputstr(
+        generate_nauty_input_from_moldata(mol_data, log=log),
         log=log,
     )
 
@@ -129,14 +142,21 @@ def calcEquivGroups(mol_data: MolData, log: Optional[Logger] = None) -> Union[st
             log.warning("calcEquivGroups: dreadnaut produced no output")
         return ""
     else:
+
         equivalence_for_atom = nauty_equivalence_dict(nauty_stdout)
+
         for atom_id in mol_data.atoms.keys():
             mol_data.atoms[atom_id][EQUIVALENCE_CLASS_KEY] = equivalence_for_atom[atom_id]
 
+        # check for the case the object was initiated from a molecule3D then remap the originids on the output
+        if "Molecule3D_id" in list(mol_data.atoms.values())[0]:
+            equivalence_for_atom = {mol_data.atoms[a]['Molecule3D_id']: symmetry_group_id
+                                    for a, symmetry_group_id in equivalence_for_atom.items()}
         if log:
             log.debug("Equivalence groups:\n{0}".format(pretty_equivalence_class_dict(mol_data, equivalence_for_atom)))
 
         return equivalence_for_atom
+
 
 def nauty_equivalence_dict(nauty_stdout: str) -> Dict[int, int]:
     orbital_data = nauty_stdout.split("seconds")[-1].strip()
@@ -167,25 +187,25 @@ def nauty_equivalence_dict(nauty_stdout: str) -> Dict[int, int]:
         print(orbital_data)
         raise
 
-    equivalence_for_atom = dict(
-        concat(
-            [
-                [(nauty_to_atb(index), n) for index in list_of_indices]
-                for (n, list_of_indices) in enumerate(equivalence_groups)
-            ],
-        ),
-    )
+    equivalence_for_atom = {
+        nauty_to_atb(index): n
+        for n, list_of_indices in enumerate(equivalence_groups)
+        for index in list_of_indices
+    }
 
     return equivalence_for_atom
+
 
 def pretty_equivalence_class_dict(mol_data: MolData, equivalence_dict: Dict[int, int]) -> str:
     return '\n'.join(
         "{equivalence_class}: {atoms}".format(
             equivalence_class=equivalence_class,
-            atoms = ' '.join([atom['symbol'] for atom in mol_data.atoms.values() if atom[EQUIVALENCE_CLASS_KEY] == equivalence_class])
+            atoms=' '.join([atom['symbol'] for atom in mol_data.atoms.values() if
+                            atom[EQUIVALENCE_CLASS_KEY] == equivalence_class])
         )
         for equivalence_class in sorted(set(equivalence_dict.values()))
     )
+
 
 def _run(args: List[str], stdin: str, log: Optional[Logger] = None) -> str:
     tmp = tempfile.TemporaryFile(buffering=0)
@@ -199,6 +219,7 @@ def _run(args: List[str], stdin: str, log: Optional[Logger] = None) -> str:
     if stderr and log:
         log.debug(stderr)
     return stdout.strip().decode()
+
 
 if __name__ == '__main__':
     pass
