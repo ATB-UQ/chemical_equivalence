@@ -7,7 +7,7 @@ from operator import itemgetter
 from chemical_equivalence.helpers.types_helpers import Logger
 from chemical_equivalence.helpers.atoms import EQUIVALENCE_CLASS_KEY
 from chemical_equivalence.helpers.iterables import concat
-from chemical_equivalence.config import NAUTY_EXECUTABLE
+from chemical_equivalence.config import DREADNAUT_EXECUTABLE
 
 from atb_outputs.helpers.types_helpers import MolData
 
@@ -108,7 +108,7 @@ def generate_nauty_input_from_moldata(mol_data: MolData, log: Optional[Logger] =
 
 def generate_nauty_output_from_inputstr(nauty_input_str: str, log: Optional[Logger] = None) -> str:
     nauty_stdout = _run(
-        [NAUTY_EXECUTABLE],
+        [DREADNAUT_EXECUTABLE],
         nauty_input_str,
         log=log,
     )

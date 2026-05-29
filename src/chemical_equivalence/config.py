@@ -1,5 +1,5 @@
-from os.path import exists, abspath, join, dirname
-import yaml
+import os
+from os.path import exists
 
 DOUBLE_BOND_LENGTH_CUTOFF = {
     frozenset(['C', 'C']): 0.1380, #nm, Source: phenix.elbow.elbow.quantum.better_bondlengths[("C", "C", 1.5)]
@@ -7,20 +7,10 @@ DOUBLE_BOND_LENGTH_CUTOFF = {
     frozenset(['N', 'N']): 0.1250, #nm, Source: http://www.chemikinternational.com/wp-content/uploads/2014/04/13.pdf
 }
 
-THIS_DIR = dirname(abspath(__file__))
-YAML_CONFIG_FILE = join(THIS_DIR, "config.yml")
+# look for DEADNNAUT_EXECUTABLE environment variable
+DREADNAUT_EXECUTABLE = '/usr/local/bin/dreadnaut' if os.getenv("DREADNAUT_EXECUTABLE") is None \
+    else os.getenv("DREADNAUT_EXECUTABLE")
 
-if not exists(YAML_CONFIG_FILE):
-    raise Exception(f"{YAML_CONFIG_FILE} file not found, modify config.yml.example file change it's name to config.yml")
-
-with open(YAML_CONFIG_FILE) as fp:
-    yaml_config = yaml.load(fp, Loader=yaml.FullLoader)
-
-# NAUTY_EXECUTABLE = yaml_config["NAUTY_EXECUTABLE"] \
-#     if yaml_config["NAUTY_EXECUTABLE"].startswith("/") \
-#     else join(THIS_DIR, yaml_config["NAUTY_EXECUTABLE"])
-NAUTY_EXECUTABLE = yaml_config["NAUTY_EXECUTABLE"]
-
-# assert NAUTY_EXECUTABLE[0] == '/', 'Dreadnaut executable was not an absolute path: "{0}"'.format(NAUTY_EXECUTABLE)
-
-assert exists(NAUTY_EXECUTABLE), 'Could not find dreadnaut executable at: "{0}". Did you install nauty (http://users.cecs.anu.edu.au/~bdm/nauty/) ?'.format(NAUTY_EXECUTABLE)
+assert exists(DREADNAUT_EXECUTABLE), ('Could not find dreadnaut executable at: "{0}". '
+                                      'You can find the nauty package which contains dreadnaut here: '
+                                      'http://users.cecs.anu.edu.au/~bdm/nauty/.').format(DREADNAUT_EXECUTABLE)

@@ -11,7 +11,8 @@ Nauty can very easily be installed from [source](http://users.cecs.anu.edu.au/~b
 
 # Configuration
 
-* The code assumes that `dreadnaut` will be installed in `/usr/local/bin`. If installing in a different location, you can change the `NAUTY_EXECUTABLE` path in `config.py`.
+* The code assumes that `nauty` package is installed and that the `dreadnaut` executable is in `/usr/local/bin`. 
+* If the executable is in a different location, you can set the `DREADNAUT_EXECUTABLE` environment variable accordingly.
 
 # Usage
 
