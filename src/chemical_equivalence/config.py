@@ -1,5 +1,5 @@
 from os import environ
-from os.path import exists
+from os.path import exists, join
 
 DOUBLE_BOND_LENGTH_CUTOFF = {
     frozenset(['C', 'C']): 0.1380, #nm, Source: phenix.elbow.elbow.quantum.better_bondlengths[("C", "C", 1.5)]
@@ -8,6 +8,13 @@ DOUBLE_BOND_LENGTH_CUTOFF = {
 }
 
 # Tier 3: chemical_equivalence-only, deployment-tunable.
-NAUTY_EXECUTABLE = environ.get('ATB_NAUTY_EXECUTABLE', '/home/atb/ATB/nauty/nauty25r9/dreadnaut')
+#
+# dreadnaut is a vendor dependency, resolved like the platform's other non-Python
+# binaries (Jmol, InChI, fixnom, CyLib): a default under <ATB_ROOT>/vendor/, with an
+# env override for custom installs and containers. It is built and placed there by
+# ATB's scripts/fetch_vendor_deps.sh. It used to be a hard-coded path into a
+# /home/atb/ATB/nauty source checkout, which tied this package to one machine's layout.
+ATB_ROOT = environ.get('ATB_ROOT', '/home/atb/ATB')
+NAUTY_EXECUTABLE = environ.get('ATB_NAUTY_EXECUTABLE', join(ATB_ROOT, 'vendor', 'nauty', 'dreadnaut'))
 
-assert exists(NAUTY_EXECUTABLE), 'Could not find dreadnaut executable at: "{0}". Did you install nauty (http://users.cecs.anu.edu.au/~bdm/nauty/) ?'.format(NAUTY_EXECUTABLE)
+assert exists(NAUTY_EXECUTABLE), 'Could not find dreadnaut executable at: "{0}". Build it with ATB\'s scripts/fetch_vendor_deps.sh, or set ATB_NAUTY_EXECUTABLE.'.format(NAUTY_EXECUTABLE)
