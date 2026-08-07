@@ -85,7 +85,8 @@ def run_tests(log: Optional[Logger], correct_symmetry: bool = True) -> None:
             )
             print()
 
-if __name__=="__main__":
+
+if __name__ == "__main__":
     log = getLogger()
     log.setLevel(DEBUG)
 

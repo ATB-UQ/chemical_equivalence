@@ -7,14 +7,20 @@ DOUBLE_BOND_LENGTH_CUTOFF = {
     frozenset(['N', 'N']): 0.1250, #nm, Source: http://www.chemikinternational.com/wp-content/uploads/2014/04/13.pdf
 }
 
-# Tier 3: chemical_equivalence-only, deployment-tunable.
+# dreadnaut (from the nauty package) is resolved from the DREADNAUT_EXECUTABLE env var,
+# defaulting to ATB's vendored copy — the same pattern as the platform's other non-Python
+# binaries (Jmol, InChI, fixnom, CyLib), built and placed by ATB's fetch_vendor_deps.sh.
+# ATB_ROOT is itself overridable, so nothing here assumes /home/atb/ATB.
 #
-# dreadnaut is a vendor dependency, resolved like the platform's other non-Python
-# binaries (Jmol, InChI, fixnom, CyLib): a default under <ATB_ROOT>/vendor/, with an
-# env override for custom installs and containers. It is built and placed there by
-# ATB's scripts/fetch_vendor_deps.sh. It used to be a hard-coded path into a
-# /home/atb/ATB/nauty source checkout, which tied this package to one machine's layout.
+# Outside an ATB checkout, set DREADNAUT_EXECUTABLE (e.g. to /usr/local/bin/dreadnaut).
+#
+# NOTE: this assert runs at IMPORT time, so a missing binary breaks `import core.atb.atb`
+# outright — every topology, not one molecule. It has done exactly that once.
 ATB_ROOT = environ.get('ATB_ROOT', '/home/atb/ATB')
-NAUTY_EXECUTABLE = environ.get('ATB_NAUTY_EXECUTABLE', join(ATB_ROOT, 'vendor', 'nauty', 'dreadnaut'))
+DREADNAUT_EXECUTABLE = environ.get('DREADNAUT_EXECUTABLE', join(ATB_ROOT, 'vendor', 'nauty', 'dreadnaut'))
 
-assert exists(NAUTY_EXECUTABLE), 'Could not find dreadnaut executable at: "{0}". Build it with ATB\'s scripts/fetch_vendor_deps.sh, or set ATB_NAUTY_EXECUTABLE.'.format(NAUTY_EXECUTABLE)
+assert exists(DREADNAUT_EXECUTABLE), (
+    'Could not find dreadnaut executable at: "{0}". Build it with ATB\'s '
+    'scripts/fetch_vendor_deps.sh, or set DREADNAUT_EXECUTABLE. The nauty package that '
+    'contains it is at http://users.cecs.anu.edu.au/~bdm/nauty/.'
+).format(DREADNAUT_EXECUTABLE)
