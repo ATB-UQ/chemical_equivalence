@@ -4,3 +4,6 @@
 *.pdb
 *.log
 config.yml
+
+# Build artefact of the editable install into the shared ATB venv.
+*.egg-info/
