@@ -25,5 +25,3 @@ class ChemicalEquivalencyTest(unittest.TestCase):
     def test_butadiene(self):
         self.run_unit_check("butadiene")
 
-suite = unittest.TestLoader().loadTestsFromTestCase(ChemicalEquivalencyTest)
-unittest.TextTestRunner(verbosity=4).run(suite)

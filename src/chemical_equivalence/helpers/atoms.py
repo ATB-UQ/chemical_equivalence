@@ -3,7 +3,7 @@ from math import sqrt
 from numpy import array, cross, dot, arctan2, degrees, sqrt
 from numpy.linalg import norm
 
-from chemical_equivalence.helpers.types_helpers import Atom, FlavourCounter, MolData
+from chemical_equivalence.helpers.types_helpers import Atom, MolData
 
 EQUIVALENCE_CLASS_KEY = 'equivalenceGroup'
 
@@ -60,7 +60,6 @@ def atom_distance(atom1: Atom, atom2: Atom) -> float:
     return sqrt((p1[0] - p2[0])**2 + (p1[1] - p2[1])**2 + (p1[2] - p2[2])**2)
 
 def angle(*atoms: List[Atom]) -> float:
-    print(atoms)
     q1, q2, q3 = map(lambda atom: array(atom[atom_coord_key(atom)]), atoms)
 
     ab, cb = q2 - q1, q2 - q3
@@ -106,21 +105,3 @@ def neighbour_equivalence_classes(atom: Atom, atoms: List[Atom]) -> List[int]:
 def has_all_different_neighbours(atom: Atom, atoms: List[Atom]) -> bool:
     all_equivalence_classes = neighbour_equivalence_classes(atom, atoms)
     return len(set(all_equivalence_classes)) == len(all_equivalence_classes)
-
-def flavour_atoms(atoms: List[Atom], flavour_counter: FlavourCounter) -> bool:
-    '''
-    Flavours atoms.
-    Returns whether or not a rerun is necessary.
-    '''
-    should_rerun = any(['flavour' not in atom for atom in atoms])
-
-    for atom in atoms:
-        set_atom_flavour(atom, flavour_counter.getNext())
-
-    return should_rerun
-
-def get_next_flavour(flavour_counter: FlavourCounter) -> int:
-    return flavour_counter.getNext()
-
-def set_atom_flavour(atom: Atom, flavour: int) -> None:
-    atom["flavour"] = flavour

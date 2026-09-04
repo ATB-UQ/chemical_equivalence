@@ -14,8 +14,6 @@ from atb_outputs.helpers.types_helpers import MolData
 atb_to_nauty = lambda x: (x - 1)
 nauty_to_atb = lambda x: (x + 1)
 
-LARGE_NUMBER = 1000
-
 Partition = Dict[int, List[int]]
 
 
@@ -42,14 +40,7 @@ def atom_descriptor_key_for(atom: Dict[str, Union[str, int, float]]) -> str:
 
 
 def atom_descriptor_for(atom: Dict[str, Union[str, int, float]]) -> str:
-    base_atom_descriptor = str(atom[atom_descriptor_key_for(atom)])
-
-    if "flavour" in atom:
-        # Append flavour to the atom descriptor in order to distinguish between stereoheterotopic atoms.
-        # LARGE_NUMBER is chosen as a large number that is much greater than the 80 existing atom types
-        return ''.join([base_atom_descriptor, str(LARGE_NUMBER + atom["flavour"])])
-    else:
-        return base_atom_descriptor
+    return str(atom[atom_descriptor_key_for(atom)])
 
 
 def nauty_partition_str_for(partition: Partition) -> str:
@@ -219,6 +210,131 @@ def _run(args: List[str], stdin: str, log: Optional[Logger] = None) -> str:
     if stderr and log:
         log.debug(stderr)
     return stdout.strip().decode()
+
+
+# ---------------------------------------------------------------------------------------
+# Stereo-aware orbits (see stereo.py for the rule being encoded)
+#
+# The molecular graph is extended with gadgets so that nauty's automorphisms are exactly
+# the label permutations that respect every tetrahedral orientation and cis relation:
+#
+#  * a tetrahedral atom X with neighbours n1<n2<n3<n4 gets three "pairing" vertices
+#    P(12|34), P(13|24), P(14|23), each hung off two "pair" vertices that join it to its
+#    two atom pairs, and the three P's are joined in a directed 3-cycle whose direction is
+#    the orientation. S4 acts on the three pairings with kernel V4; an odd permutation of
+#    the neighbours induces a transposition of the P's, which a directed cycle forbids, so
+#    exactly the even permutations survive -- orientation preserved;
+#  * a cis pair (a, b) across a double bond gets one vertex adjacent to both, so cis pairs
+#    can only map onto cis pairs.
+#
+# Reversing every P-cycle gives the mirror image graph; an isomorphism from the graph to
+# its mirror is an improper symmetry (handedness -1 everywhere). The orbits of all valid
+# automorphisms are the orbits of the proper ones merged along one such isomorphism.
+
+PAIRINGS = ((0, 1, 2, 3), (0, 2, 1, 3), (0, 3, 1, 2))  # (i, j | k, l) as index pairs
+
+
+def atom_vertex_map(mol_data: MolData) -> Dict[int, int]:
+    """Atom id -> nauty vertex, atoms in increasing id order (so it coincides with
+    atb_to_nauty whenever ids are 1..N)."""
+    return {atom_id: vertex for (vertex, atom_id) in enumerate(sorted(mol_data.atoms))}
+
+
+def stereo_graph(mol_data: MolData, orientations: Dict[int, int], cis_pairs: List[Tuple[int, int]],
+                 invert: bool = False) -> str:
+    """dreadnaut input (digraph) for the molecule plus stereo gadgets; ``invert`` builds
+    the mirror image. Every atom keeps its constitutional colour cell; gadget vertices
+    get cells of their own, which sort after the numeric atom descriptors."""
+    vertex_of = atom_vertex_map(mol_data)
+    out_edges: Dict[int, set] = {vertex: set() for vertex in vertex_of.values()}
+    cells: Dict[str, List[int]] = {}
+    for (atom_id, atom) in mol_data.atoms.items():
+        cells.setdefault(atom_descriptor_for(atom), []).append(vertex_of[atom_id])
+    for bond in mol_data.bonds:
+        (a, b) = (vertex_of[bond['atoms'][0]], vertex_of[bond['atoms'][1]])
+        out_edges[a].add(b)
+        out_edges[b].add(a)
+
+    def new_vertex(cell: str) -> int:
+        vertex = len(out_edges)
+        out_edges[vertex] = set()
+        cells.setdefault(cell, []).append(vertex)
+        return vertex
+
+    def undirected(u: int, v: int) -> None:
+        out_edges[u].add(v)
+        out_edges[v].add(u)
+
+    for (atom_id, orientation) in sorted(orientations.items()):
+        neighbours = [vertex_of[n] for n in sorted(mol_data.atoms[atom_id]['conn'])]
+        pairing_vertices = []
+        for (i, j, k, l) in PAIRINGS:
+            pairing = new_vertex('zP')
+            for (first, second) in ((i, j), (k, l)):
+                pair = new_vertex('zQ')
+                undirected(pair, pairing)
+                undirected(pair, neighbours[first])
+                undirected(pair, neighbours[second])
+            pairing_vertices.append(pairing)
+        forward = (orientation > 0) != invert
+        for n in range(3):
+            (u, v) = (pairing_vertices[n], pairing_vertices[(n + 1) % 3])
+            out_edges[u].add(v) if forward else out_edges[v].add(u)
+
+    for (a, b) in cis_pairs:
+        cis = new_vertex('zCIS')
+        undirected(cis, vertex_of[a])
+        undirected(cis, vertex_of[b])
+
+    n_vertices = len(out_edges)
+    edges = ';'.join(
+        '{0}:{1}'.format(vertex, ' '.join(str(target) for target in sorted(out_edges[vertex])))
+        for vertex in range(n_vertices) if out_edges[vertex]
+    )
+    partition = '|'.join(
+        ','.join(str(vertex) for vertex in sorted(cells[cell]))
+        for cell in sorted(cells)
+    )
+    return 'n={0} d g {1}. f=[{2}]'.format(n_vertices, edges, partition)
+
+
+def stereo_orbits(mol_data: MolData, orientations: Dict[int, int], cis_pairs: List[Tuple[int, int]],
+                  log: Optional[Logger] = None) -> Tuple[Dict[int, int], bool]:
+    """Equivalence classes under every orientation-respecting automorphism, proper or
+    improper, plus whether an improper one (a mirror) exists. Two dreadnaut runs: the
+    orbits of the proper automorphisms, then the isomorphism onto the mirror image."""
+    vertex_of = atom_vertex_map(mol_data)
+    atom_of = {vertex: atom_id for (atom_id, vertex) in vertex_of.items()}
+    graph = stereo_graph(mol_data, orientations, cis_pairs)
+    mirror = stereo_graph(mol_data, orientations, cis_pairs, invert=True)
+
+    proper_output = generate_nauty_output_from_inputstr(graph + ' c xo', log=log)
+    if not proper_output:
+        raise Exception('dreadnaut produced no output for the stereo graph')
+    orbit_of_vertex = nauty_equivalence_dict(proper_output)  # keys are vertex + 1
+    orbit = {atom_of[vertex]: orbit_of_vertex[vertex + 1] for vertex in atom_of}
+
+    mirror_output = generate_nauty_output_from_inputstr(graph + ' c x @ ' + mirror + ' x ##', log=log)
+    has_mirror = HAS_FOUND_ISOMORPHISM_MSG in mirror_output
+    if has_mirror:
+        parent = {}
+
+        def find(x):
+            while parent.get(x, x) != x:
+                x = parent[x]
+            return x
+
+        for (vertex, image) in get_partition_from_nauty_output(mirror_output):
+            if vertex in atom_of and image in atom_of:
+                (a, b) = (find(orbit[atom_of[vertex]]), find(orbit[atom_of[image]]))
+                if a != b:
+                    parent[a] = b
+        orbit = {atom_id: find(label) for (atom_id, label) in orbit.items()}
+
+    if log:
+        log.debug('Stereo orbits: {0} proper, mirror image {1}'.format(
+            len(set(orbit_of_vertex.values())), 'found' if has_mirror else 'absent'))
+    return orbit, has_mirror
 
 
 if __name__ == '__main__':

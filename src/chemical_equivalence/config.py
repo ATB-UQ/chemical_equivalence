@@ -24,3 +24,12 @@ assert exists(DREADNAUT_EXECUTABLE), (
     'scripts/fetch_vendor_deps.sh, or set DREADNAUT_EXECUTABLE. The nauty package that '
     'contains it is at http://users.cecs.anu.edu.au/~bdm/nauty/.'
 ).format(DREADNAUT_EXECUTABLE)
+
+# Stereo perception (stereo.py). A 4-coordinate atom carries an orientation only if the
+# signed volume spanned by its four neighbours, normalised by the cube of its mean bond
+# length, exceeds this: a regular tetrahedron gives ~3.1, square planar gives 0.
+TETRAHEDRAL_MIN_NORMALISED_VOLUME = 0.05
+# Substituent pairs across a detected double bond are cis below the first dihedral (deg)
+# and trans above the second; a bond with a pair in between is twisted and ignored.
+CIS_MAX_DIHEDRAL = 60.0
+TRANS_MIN_DIHEDRAL = 120.0

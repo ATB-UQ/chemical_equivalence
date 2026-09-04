@@ -1,5 +1,5 @@
 from glob import glob
-from os.path import basename, join
+from os.path import abspath, basename, dirname, join
 from logging import basicConfig, getLogger, DEBUG, StreamHandler, Formatter
 from sys import stdout
 from os import devnull
@@ -12,7 +12,7 @@ from chemical_equivalence.helpers.atoms import EQUIVALENCE_CLASS_KEY
 
 from atb_outputs.graph import graph_img
 
-TESTING_DIR = 'testing'
+TESTING_DIR = join(dirname(abspath(__file__)), 'testing')
 
 CACHE_GRAPH_POS = True
 graph_for_test = {}
