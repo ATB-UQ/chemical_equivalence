@@ -2,9 +2,9 @@
 
 # Requirements
 
-* Python `>=3.5`
+* Python `>=3.9` (the code uses builtin generics such as `list[tuple[int, ...]]`)
 
-* ATB Outputs python module: `https://github.com/ATB-UQ/atb_outputs.git
+* ATB Outputs python module: `https://github.com/ATB-UQ/atb_outputs.git` (provides `MolData`; declared in `setup.cfg` as a `git+ssh` dependency, so in the platform venv install it first / use `--no-deps`)
 
 * Nauty: This modules relies on the `dreadnaut` executable which is part of the `nauty` package.
 Nauty can very easily be installed from [source](http://users.cecs.anu.edu.au/~bdm/nauty/) or using a package manager such as `homebrew` for Mac OS X users.
@@ -36,7 +36,7 @@ Please see the documentation of the `atb_outputs` module for further description
 
 ```
 >>> from chemical_equivalence.helpers.types_helpers import MolData
->>> mol_data = MolData(open('testing/chlorocyclohexane.pdb').read())
+>>> mol_data = MolData(open('src/chemical_equivalence/testing/chlorocyclohexane.pdb').read())
 ```
 
 * The chemical equivalence can be run in a single line of code:
@@ -59,6 +59,16 @@ Please see the documentation of the `atb_outputs` module for further description
 >>> list((atom['symbol'], equivalence_dict[atom['id']]) for atom in mol_data.atoms.values())
 [('H8', 0), ('C2', 1), ('Cl1', 2), ('C7', 3), ('H17', 4), ('H18', 5), ('C3', 3), ('H9', 5), ('H10', 4), ('C4', 6), ('H11', 7), ('H12', 8), ('C5', 9), ('H13', 10), ('H14', 11), ('C6', 6), ('H15', 7), ('H16', 8)]
 ```
+
+# Platform role
+
+Status: live-production support. `core.atb.atb` calls `getChemEquivGroups` for every
+topology (equivalence groups drive charge/parameter symmetrisation), and `Blind_RMSD`,
+`NMR_Interface`, `fragment_merger` and `atb_molgraph`'s benchmarks import it. A missing
+`dreadnaut` breaks `import chemical_equivalence.config`, hence `import core.atb.atb`.
+`calcChemEquivalency.py` also has a small `__main__` argparse entry point.
+`examples/test.py` (`Molecule3D_example`) additionally needs the `NXMol`
+(`chemistry_data_structure`) sibling.
 
 # Citation / Attribution
 
