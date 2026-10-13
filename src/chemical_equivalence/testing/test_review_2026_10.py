@@ -2,6 +2,7 @@
 
 Run with:  /home/atb/ATB/.venv/bin/python -m pytest src/chemical_equivalence/testing -v
 """
+import time
 from os.path import dirname, join
 
 import pytest
@@ -9,9 +10,8 @@ import pytest
 from atb_outputs.mol_data import MolData
 from chemical_equivalence.calcChemEquivalency import getChemEquivGroups
 from chemical_equivalence.config import DREADNAUT_EXECUTABLE
-from chemical_equivalence.NautyInterface import (
-    _run, generate_nauty_output_from_inputstr, nauty_graph, partition_for_chemical_equivalence_dict,
-)
+from chemical_equivalence import NautyInterface
+from chemical_equivalence.NautyInterface import DreadnautError, _run
 
 FIXTURES = dirname(__file__)
 
@@ -53,38 +53,62 @@ def test_acetone_oxime_methyls_stay_merged_documented_limitation():
     assert len({classes[m] for m in methyls}) == 1
 
 
-def test_cross_molecule_partition_is_a_valid_nauty_colouring():
-    # CE-C-1 :
-    # comparing a molecule with itself must give dreadnaut no complaint on stderr.
-    mol_data = MolData(open(join(FIXTURES, 'chlorocyclohexane.pdb')).read())
-    classes, _ = getChemEquivGroups(mol_data)
-    partition = partition_for_chemical_equivalence_dict(classes)
-    text = '{0} c x @ {1} x ##'.format(
-        nauty_graph(mol_data, nauty_node_partition=partition),
-        nauty_graph(mol_data, nauty_node_partition=partition),
-    )
-
-    messages = []
-
-    class Recorder:
-        def debug(self, message):
-            messages.append(message)
-
-    generate_nauty_output_from_inputstr(text, log=Recorder())
-    assert not messages, messages
-
-
-test_cross_molecule_partition_is_a_valid_nauty_colouring = pytest.mark.xfail(
-    strict=True,
-    reason='CE-C-1: partition_for_chemical_equivalence_dict is 1-based but dreadnaut vertices are '
-           '0-based ("illegal or repeated number"); only reachable via the retired Blind_RMSD / --other-pdbs path',
-)(test_cross_molecule_partition_is_a_valid_nauty_colouring)
-
-
-@pytest.mark.xfail(
-    strict=True,
-    reason='CE-C-2: _run ignores the dreadnaut return code and stderr, so malformed input is not an error',
-)
 def test_run_on_malformed_input_raises():
-    with pytest.raises(Exception):
+    # CE-C-2: dreadnaut reports bad input on stderr and still exits 0; that must be an error.
+    with pytest.raises(DreadnautError, match='not defined'):
         _run([DREADNAUT_EXECUTABLE], 'this is not a valid dreadnaut script ;;; %%%\n')
+
+
+def test_run_raises_on_non_zero_exit_code():
+    with pytest.raises(DreadnautError, match='exit code 3'):
+        _run(['sh', '-c', 'exit 3'], '')
+
+
+def test_run_timeout_kills_the_whole_process_group(tmp_path):
+    # CE-C-2 / CE-1: a hung dreadnaut (here a shell with a background child) is killed,
+    # children included, and the call raises instead of blocking forever.
+    pid_file = tmp_path / 'child.pid'
+    started = time.monotonic()
+    with pytest.raises(DreadnautError, match='timed out'):
+        _run(['sh', '-c', 'sleep 60 & echo $! > {0}; wait'.format(pid_file)], '', timeout=0.5)
+    assert time.monotonic() - started < 10
+    child = int(pid_file.read_text())
+    deadline = time.monotonic() + 5
+    while time.monotonic() < deadline:
+        try:
+            state = open('/proc/{0}/stat'.format(child)).read().rsplit(')', 1)[1].split()[0]
+        except FileNotFoundError:
+            break
+        if state == 'Z':
+            break
+        time.sleep(0.05)
+    else:
+        pytest.fail('background child {0} survived the timeout'.format(child))
+
+
+def test_empty_dreadnaut_output_raises(monkeypatch):
+    # CE-2: no output used to come back as "" in place of the class dict.
+    monkeypatch.setattr(NautyInterface, '_run', lambda *args, **kwargs: '')
+    mol_data = MolData(open(join(FIXTURES, 'chlorocyclohexane.pdb')).read())
+    with pytest.raises(DreadnautError, match='no output'):
+        NautyInterface.calcEquivGroups(mol_data)
+
+
+def test_unparseable_orbits_raise():
+    # CE-C-6: the parse failure is an error carrying the text, not a print to stdout.
+    with pytest.raises(DreadnautError, match='could not parse'):
+        NautyInterface.nauty_equivalence_dict('cpu time = 0.00 seconds\n0 1 junk;')
+
+
+def test_mirror_run_without_a_verdict_raises(monkeypatch):
+    # CE-C-2: the mirror run must say "identical." or "different."; anything else used to
+    # read as "no mirror image" and silently split enantiotopic atoms.
+    real = NautyInterface.generate_nauty_output_from_inputstr
+
+    def fake(text, log=None):
+        return 'garbage' if '@' in text else real(text, log=log)
+
+    monkeypatch.setattr(NautyInterface, 'generate_nauty_output_from_inputstr', fake)
+    mol_data = MolData(open(join(FIXTURES, '1-chloro-1-bromopropane.pdb')).read())
+    with pytest.raises(DreadnautError, match='verdict'):
+        getChemEquivGroups(mol_data)

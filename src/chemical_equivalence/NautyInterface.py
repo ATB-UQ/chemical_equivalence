@@ -1,15 +1,22 @@
+import os
+import signal
 import subprocess
 import tempfile
 from typing import Union, Optional, List, Dict, Tuple
 from itertools import groupby
-from operator import itemgetter
 
 from chemical_equivalence.helpers.types_helpers import Logger
 from chemical_equivalence.helpers.atoms import EQUIVALENCE_CLASS_KEY
 from chemical_equivalence.helpers.iterables import concat
-from chemical_equivalence.config import DREADNAUT_EXECUTABLE
+from chemical_equivalence.config import DREADNAUT_EXECUTABLE, DREADNAUT_TIMEOUT
 
 from atb_outputs.helpers.types_helpers import MolData
+
+
+class DreadnautError(RuntimeError):
+    """dreadnaut failed: non-zero exit, a complaint on stderr, no output, a timeout, or an
+    answer the caller could not interpret."""
+
 
 atb_to_nauty = lambda x: (x - 1)
 nauty_to_atb = lambda x: (x + 1)
@@ -51,19 +58,6 @@ def nauty_partition_str_for(partition: Partition) -> str:
             for (_, indices) in sorted(partition.items())
         ]
     )
-
-
-def partition_for_chemical_equivalence_dict(chemical_equivalence_dict: Dict[int, int]) -> Partition:
-    return {
-        key: [atom_id for (atom_id, equivalence_class_id) in group]
-        for (key, group) in groupby(
-            sorted(
-                chemical_equivalence_dict.items(),
-                key=itemgetter(1)
-            ),
-            key=itemgetter(1),
-        )
-    }
 
 
 def get_partition_for(mol_data: MolData) -> Partition:
@@ -108,6 +102,7 @@ def generate_nauty_output_from_inputstr(nauty_input_str: str, log: Optional[Logg
 
 
 HAS_FOUND_ISOMORPHISM_MSG = "h and h' are identical."
+HAS_NO_ISOMORPHISM_MSG = "h and h' are different."
 
 
 def get_partition_from_nauty_output(nauty_output_str: str) -> list[tuple[int, ...]]:
@@ -119,7 +114,7 @@ def get_partition_from_nauty_output(nauty_output_str: str) -> list[tuple[int, ..
     ]
 
 
-def calcEquivGroups(mol_data: MolData, log: Optional[Logger] = None) -> Union[str, Dict[int, int]]:
+def calcEquivGroups(mol_data: MolData, log: Optional[Logger] = None) -> Dict[int, int]:
     if log:
         log.debug("Running Nauty")
 
@@ -129,9 +124,7 @@ def calcEquivGroups(mol_data: MolData, log: Optional[Logger] = None) -> Union[st
     )
 
     if len(nauty_stdout) == 0:
-        if log is not None:
-            log.warning("calcEquivGroups: dreadnaut produced no output")
-        return ""
+        raise DreadnautError('calcEquivGroups: dreadnaut produced no output')
     else:
 
         equivalence_for_atom = nauty_equivalence_dict(nauty_stdout)
@@ -174,9 +167,8 @@ def nauty_equivalence_dict(nauty_stdout: str) -> Dict[int, int]:
             for group_str in orbital_data.split(";")
             if group_str
         ]
-    except:
-        print(orbital_data)
-        raise
+    except Exception as e:
+        raise DreadnautError('could not parse dreadnaut orbits {0!r}: {1}'.format(orbital_data, e)) from e
 
     equivalence_for_atom = {
         nauty_to_atb(index): n
@@ -198,17 +190,38 @@ def pretty_equivalence_class_dict(mol_data: MolData, equivalence_dict: Dict[int,
     )
 
 
-def _run(args: List[str], stdin: str, log: Optional[Logger] = None) -> str:
-    tmp = tempfile.TemporaryFile(buffering=0)
-    tmp.write(stdin.encode())
-    tmp.seek(0)
+def _kill_process_group(proc: subprocess.Popen) -> None:
+    try:
+        os.killpg(proc.pid, signal.SIGKILL)
+    except (ProcessLookupError, PermissionError):
+        pass
 
-    proc = subprocess.Popen(args, stdin=tmp, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    stdout, stderr = proc.communicate()
 
-    tmp.close()
-    if stderr and log:
-        log.debug(stderr)
+def _run(args: List[str], stdin: str, log: Optional[Logger] = None, timeout: Optional[float] = None) -> str:
+    """Run dreadnaut on ``stdin`` and return its stripped stdout. dreadnaut runs in its own
+    session so the whole process group can be killed on a timeout or on any exception
+    (a Celery soft time limit included). Raises DreadnautError on a timeout, a non-zero
+    exit code or anything on stderr (dreadnaut reports bad input there and still exits 0)."""
+    timeout = DREADNAUT_TIMEOUT if timeout is None else timeout
+    with tempfile.TemporaryFile(buffering=0) as tmp:
+        tmp.write(stdin.encode())
+        tmp.seek(0)
+        with subprocess.Popen(args, stdin=tmp, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                              start_new_session=True) as proc:
+            try:
+                stdout, stderr = proc.communicate(timeout=timeout)
+            except subprocess.TimeoutExpired:
+                _kill_process_group(proc)
+                raise DreadnautError('dreadnaut timed out after {0} s'.format(timeout)) from None
+            except BaseException:
+                _kill_process_group(proc)
+                raise
+
+    stderr_text = stderr.decode(errors='replace').strip()
+    if log and stderr_text:
+        log.debug(stderr_text)
+    if proc.returncode != 0 or stderr_text:
+        raise DreadnautError('dreadnaut failed (exit code {0}): {1}'.format(proc.returncode, stderr_text[:2000]))
     return stdout.strip().decode()
 
 
@@ -310,12 +323,18 @@ def stereo_orbits(mol_data: MolData, orientations: Dict[int, int], cis_pairs: Li
 
     proper_output = generate_nauty_output_from_inputstr(graph + ' c xo', log=log)
     if not proper_output:
-        raise Exception('dreadnaut produced no output for the stereo graph')
+        raise DreadnautError('dreadnaut produced no output for the stereo graph')
     orbit_of_vertex = nauty_equivalence_dict(proper_output)  # keys are vertex + 1
     orbit = {atom_of[vertex]: orbit_of_vertex[vertex + 1] for vertex in atom_of}
 
     mirror_output = generate_nauty_output_from_inputstr(graph + ' c x @ ' + mirror + ' x ##', log=log)
-    has_mirror = HAS_FOUND_ISOMORPHISM_MSG in mirror_output
+    if HAS_FOUND_ISOMORPHISM_MSG in mirror_output:
+        has_mirror = True
+    elif HAS_NO_ISOMORPHISM_MSG in mirror_output:
+        has_mirror = False
+    else:
+        raise DreadnautError('dreadnaut gave no isomorphism verdict for the mirror image: {0!r}'.format(
+            mirror_output[-2000:]))
     if has_mirror:
         parent = {}
 

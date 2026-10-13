@@ -67,8 +67,13 @@ topology (equivalence groups drive charge/parameter symmetrisation). Other impor
 `NMR_Interface`, the website v0.1 API (three modules import the constant
 `ALL_EXCEPTION_SEARCHING_KEYWORDS`, so a missing `dreadnaut` breaks them too),
 `core/testing/equivalence_sweep.py`, `atb_molgraph`'s benchmarks and a `PyMultifitESP` example.
-`Blind_RMSD` (retired 2026-10-07) was the only caller of `partial_mol_data_for_pdbstr` and
-`get_chemical_equivalence_accross`; `fragment_merger` does not import it. A missing
+`Blind_RMSD` (retired 2026-10-07) was the only caller of `partial_mol_data_for_pdbstr` and of
+the cross-molecule `get_chemical_equivalence_accross` (deleted in the 2026-10 review, with the
+CLI's `--other-pdbs`); `fragment_merger` does not import it.
+Every dreadnaut run has a wall-clock limit (`ATB_CHEMICAL_EQUIVALENCE_DREADNAUT_TIMEOUT`,
+default 60 s) and is killed by process group on a timeout or any exception; a timeout, a
+non-zero exit, anything on dreadnaut's stderr, empty output or a mirror run without an
+`identical.`/`different.` verdict raises `NautyInterface.DreadnautError`. A missing
 `dreadnaut` breaks `import chemical_equivalence.config`, hence `import core.atb.atb`.
 `calcChemEquivalency.py` also has a small `__main__` argparse entry point.
 `examples/test.py` (`Molecule3D_example`) additionally needs the `NXMol`

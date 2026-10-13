@@ -4,9 +4,7 @@ from itertools import groupby
 from operator import itemgetter
 
 from chemical_equivalence.log_helpers import print_stderr
-from chemical_equivalence.NautyInterface import (calcEquivGroups, nauty_graph, generate_nauty_output_from_inputstr,
-                                                 get_partition_from_nauty_output, partition_for_chemical_equivalence_dict,
-                                                 pretty_equivalence_class_dict, stereo_orbits, Partition)
+from chemical_equivalence.NautyInterface import calcEquivGroups, pretty_equivalence_class_dict, stereo_orbits
 from chemical_equivalence.double_bond import double_bonds as detect_double_bonds
 from chemical_equivalence.stereo import (tetrahedral_orientations, cis_pairs, stereo_sources, acyclic_double_bonds,
                                          bond_distances_from, merge_distant_splits, renumber)
@@ -52,8 +50,6 @@ def getChemEquivGroups(
     ``molData.equivalence_details`` records how the answer was reached.
     """
     constitutional = calcEquivGroups(molData, log)
-    if not isinstance(constitutional, dict):
-        return constitutional, 0
     strict = dict(constitutional)
     details: Dict[str, Any] = {
         'constitutional': dict(constitutional),
@@ -159,36 +155,9 @@ def partial_mol_data_for_pdbstr(
     return data
 
 
-def get_chemical_equivalence_accross(mol_datae: List[MolData], correct_symmetry: bool) -> List[Partition]:
-    chemical_equivalence_dicts = [
-        getChemEquivGroups(mol_data, correct_symmetry=correct_symmetry)[0]
-        for mol_data in mol_datae
-    ]
-
-    return [
-        get_partition_from_nauty_output(
-            generate_nauty_output_from_inputstr(
-                '{0} c x @ {1} x ##'.format(
-                    nauty_graph(
-                        mol_datae[0],
-                        nauty_node_partition=partition_for_chemical_equivalence_dict(chemical_equivalence_dicts[0]),
-                    ),
-                    nauty_graph(
-                        other_mol_data,
-                        nauty_node_partition=partition_for_chemical_equivalence_dict(other_chemical_equivalence_dict),
-                    ),
-                ),
-            ),
-        )
-        for (other_mol_data, other_chemical_equivalence_dict) in list(zip(mol_datae, chemical_equivalence_dicts))[1:]
-    ]
-
-
 if __name__ == '__main__':
     parser = ArgumentParser()
     parser.add_argument('--pdb', type=str, help='Main PDB file.', required=True)
-    parser.add_argument('--other-pdbs', nargs='*', default=[], help='Other PDB files.')
-    parser.add_argument('--index-starts-at', type=int, default=1, help='')
     parser.add_argument('--disable-symmetry', action='store_true', help='Disable symmetry correction'),
     parser.add_argument('--max-stereo-distance', type=int, default=None,
                         help='Merge diastereotopic splits back beyond this many bonds from a stereo element')
@@ -198,30 +167,10 @@ if __name__ == '__main__':
     with open(args.pdb, "r") as fh:
         pdb_str = fh.read()
 
-    other_pdb_strs = [
-        open(other_pdb, "r").read()
-        for other_pdb in args.other_pdbs
-    ]
-
-    if len(other_pdb_strs) == 0:
-        print(
-            getChemEquivGroups(
-                MolData(pdb_str),
-                correct_symmetry=not args.disable_symmetry,
-                max_stereo_distance=args.max_stereo_distance,
-            ),
-        )
-    else:
-        translate_partition = lambda partition: [(x + args.index_starts_at, y + args.index_starts_at) for (x, y) in partition]
-
-        print(
-            list(
-                map(
-                    translate_partition,
-                    get_chemical_equivalence_accross(
-                        list(map(MolData, [pdb_str] + other_pdb_strs)),
-                        not args.disable_symmetry,
-                    ),
-                ),
-            )
-        )
+    print(
+        getChemEquivGroups(
+            MolData(pdb_str),
+            correct_symmetry=not args.disable_symmetry,
+            max_stereo_distance=args.max_stereo_distance,
+        ),
+    )

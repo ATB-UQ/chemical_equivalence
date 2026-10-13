@@ -25,6 +25,11 @@ assert exists(DREADNAUT_EXECUTABLE), (
     'contains it is at http://users.cecs.anu.edu.au/~bdm/nauty/.'
 ).format(DREADNAUT_EXECUTABLE)
 
+# Wall-clock limit (seconds) for one dreadnaut run. The slowest real case measured in the
+# 2026-10 review (a 252-atom carbon nanotube) takes 0.33 s, so this only catches a hang; it
+# must stay below the callers' own limits (Celery soft_time_limit, fcgid busy timeout).
+DREADNAUT_TIMEOUT = float(environ.get('ATB_CHEMICAL_EQUIVALENCE_DREADNAUT_TIMEOUT', '60'))
+
 # Stereo perception (stereo.py). A 4-coordinate atom carries an orientation only if the
 # signed volume spanned by its four neighbours, normalised by the cube of its mean bond
 # length, exceeds this: a regular tetrahedron gives ~3.1, square planar gives 0.
