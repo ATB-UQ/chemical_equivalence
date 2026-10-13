@@ -19,11 +19,11 @@ Two atoms are equivalent when some rotation or reflection of the molecule, in an
 
 `getChemEquivGroups(..., max_stereo_distance=N)` merges such splits back for atoms more than `N` heavy-atom bonds from every stereo element, where the effect is negligible and identical parameters on equivalent atoms matter more; `None` keeps them all. `mol_data.equivalence_details` records the constitutional, strict and effective classes and the stereo elements found.
 
-Not detected: axial chirality (allenes, atropisomers, spiro compounds) and pyramidal three-coordinate centres (sulfoxides, phosphines).
+Not detected: axial chirality (allenes, atropisomers, spiro compounds), pyramidal three-coordinate centres (sulfoxides, phosphines), amide C-N bonds (too long, ~0.136-0.139 nm against the 0.1337 nm cutoff, so the two N-substituents of e.g. N,N-dimethylacetamide stay equivalent) and C=N double bonds of imines, oximes and hydrazones (the 2-coordinate N fails the three-neighbour sp2 rule, so syn/anti substituents stay equivalent). Both are pinned by tests in `testing/test_review_2026_10.py`.
 
 # Usage
 
-A simple example is included in `examples/test.py`
+A simple example is included in `examples/test.py` (run it from `src/chemical_equivalence/testing/`: it opens `benzene.pdb` relative to the working directory). `src/chemical_equivalence/test.py` is an older timing/graph-image harness, not a pytest module.
 
 The tests live in `src/chemical_equivalence/testing/` (fixture molecules as PDB files, relation-style expectations, and invariance properties on RDKit-embedded structures):
 
@@ -63,8 +63,12 @@ Please see the documentation of the `atb_outputs` module for further description
 # Platform role
 
 Status: live-production support. `core.atb.atb` calls `getChemEquivGroups` for every
-topology (equivalence groups drive charge/parameter symmetrisation), and `Blind_RMSD`,
-`NMR_Interface`, `fragment_merger` and `atb_molgraph`'s benchmarks import it. A missing
+topology (equivalence groups drive charge/parameter symmetrisation). Other importers:
+`NMR_Interface`, the website v0.1 API (three modules import the constant
+`ALL_EXCEPTION_SEARCHING_KEYWORDS`, so a missing `dreadnaut` breaks them too),
+`core/testing/equivalence_sweep.py`, `atb_molgraph`'s benchmarks and a `PyMultifitESP` example.
+`Blind_RMSD` (retired 2026-10-07) was the only caller of `partial_mol_data_for_pdbstr` and
+`get_chemical_equivalence_accross`; `fragment_merger` does not import it. A missing
 `dreadnaut` breaks `import chemical_equivalence.config`, hence `import core.atb.atb`.
 `calcChemEquivalency.py` also has a small `__main__` argparse entry point.
 `examples/test.py` (`Molecule3D_example`) additionally needs the `NXMol`
