@@ -45,7 +45,7 @@ def getChemEquivGroups(
     atom it is bonded to, so a CH2 two bonds from a stereocentre keeps its hydrogens
     split at ``max_stereo_distance=2``.
 
-    The second value is the number of extra dreadnaut runs the stereo treatment needed
+    The second value is the number of extra nauty runs the stereo treatment needed
     (0 when the molecule has no stereo element), kept for the old ``n_iterations`` slot.
     ``molData.equivalence_details`` records how the answer was reached.
     """

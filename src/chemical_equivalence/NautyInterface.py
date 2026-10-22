@@ -1,45 +1,29 @@
-import os
-import signal
-import subprocess
-import tempfile
+"""Graph symmetry for chemical equivalence: nauty, in process, through ``atb_nauty``.
+
+Two questions are asked of nauty, and both answers are invariants of the coloured graph,
+not artefacts of a nauty version or of the vertex numbering: the orbits of the
+automorphism group, and whether the stereo graph is isomorphic to its mirror image.
+"""
 from typing import Union, Optional, List, Dict, Tuple
 from itertools import groupby
 
+import atb_nauty
+from atb_nauty import NautyError
+
 from chemical_equivalence.helpers.types_helpers import Logger
 from chemical_equivalence.helpers.atoms import EQUIVALENCE_CLASS_KEY
-from chemical_equivalence.helpers.iterables import concat
-from chemical_equivalence.config import DREADNAUT_EXECUTABLE, DREADNAUT_TIMEOUT
 
 from atb_outputs.helpers.types_helpers import MolData
 
-
-class DreadnautError(RuntimeError):
-    """dreadnaut failed: non-zero exit, a complaint on stderr, no output, a timeout, or an
-    answer the caller could not interpret."""
+#: Until 2026-10 nauty ran as the dreadnaut program and failures raised DreadnautError;
+#: kept as an alias for callers that still catch it.
+DreadnautError = NautyError
 
 
 atb_to_nauty = lambda x: (x - 1)
 nauty_to_atb = lambda x: (x + 1)
 
-Partition = Dict[int, List[int]]
-
-
-def generate_nauty_edges_str(mol_data: MolData) -> str:
-    return ''.join(
-        [
-            "{0}:{1};".format(*[atb_to_nauty(index) for index in bond['atoms']])
-            for bond in mol_data.bonds
-        ]
-    )
-
-
-def nauty_graph(mol_data: MolData, nauty_node_partition: Optional[Partition] = None) -> str:
-    return 'n={num_atoms} g {edges}.f=[{node_partition}]'.format(
-        num_atoms=len(mol_data.atoms),
-        edges=generate_nauty_edges_str(mol_data),
-        node_partition=nauty_partition_str_for(
-            get_partition_for(mol_data) if nauty_node_partition is None else nauty_node_partition)
-    )
+Partition = Dict[str, List[int]]
 
 
 def atom_descriptor_key_for(atom: Dict[str, Union[str, int, float]]) -> str:
@@ -50,21 +34,11 @@ def atom_descriptor_for(atom: Dict[str, Union[str, int, float]]) -> str:
     return str(atom[atom_descriptor_key_for(atom)])
 
 
-def nauty_partition_str_for(partition: Partition) -> str:
-    # Format it in dreadnaut's partition format. Ex: "1,2,3|4,5,6"
-    return '|'.join(
-        [
-            ','.join(map(str, indices))
-            for (_, indices) in sorted(partition.items())
-        ]
-    )
-
-
 def get_partition_for(mol_data: MolData) -> Partition:
-    # A parition is a dictionnary where keys are iacm or element type (ex:12 for C) and values are a list of matching atom indexes. 
+    # A parition is a dictionnary where keys are iacm or element type (ex:12 for C) and values are a list of matching atom indexes.
     # Ex: {'12': [2, 4, 7, 10, 13, 16], '20': [1, 3, 5, 6, 8, 9, 11, 12, 14, 15, 17, 18]}
     return {
-        # Shift atom indexes by one to match dreadnaut's convention (starts at 0)
+        # Shift atom indexes by one to match nauty's convention (starts at 0)
         # Atoms are sorted by key=atom_descriptor_for for canonical flovouring of the nauty nodes
         group_key: [atb_to_nauty(atom['id']) for atom in group_iterator]
         for (group_key, group_iterator) in groupby(
@@ -74,107 +48,45 @@ def get_partition_for(mol_data: MolData) -> Partition:
     }
 
 
-def get_nauty_node_partition(mol_data: MolData) -> str:
-    return nauty_partition_str_for(
-        get_partition_for(mol_data),
+def molecule_graph(mol_data: MolData) -> atb_nauty.Graph:
+    """The molecular graph: vertex = atom id - 1, one colour cell per atom descriptor
+    (``iacm``, else ``type``), cells in descriptor-string order. Atom ids must be 1..N."""
+    return atb_nauty.Graph(
+        len(mol_data.atoms),
+        edges=[tuple(atb_to_nauty(index) for index in bond['atoms']) for bond in mol_data.bonds],
+        partition=[cell for (_, cell) in sorted(get_partition_for(mol_data).items())],
     )
 
 
-def generate_nauty_input_from_moldata(mol_data: MolData, log: Optional[Logger] = None) -> str:
-    input_str = '{nauty_graph} c xo'.format(
-        nauty_graph=nauty_graph(mol_data),
-    )
-
-    if log:
-        log.debug('Nauty input: {0}'.format(input_str))
-
-    return input_str
-
-
-def generate_nauty_output_from_inputstr(nauty_input_str: str, log: Optional[Logger] = None) -> str:
-    nauty_stdout = _run(
-        [DREADNAUT_EXECUTABLE],
-        nauty_input_str,
-        log=log,
-    )
-
-    return nauty_stdout
-
-
-HAS_FOUND_ISOMORPHISM_MSG = "h and h' are identical."
-HAS_NO_ISOMORPHISM_MSG = "h and h' are different."
-
-
-def get_partition_from_nauty_output(nauty_output_str: str) -> list[tuple[int, ...]]:
-    assert HAS_FOUND_ISOMORPHISM_MSG in nauty_output_str, nauty_output_str
-
-    return [
-        tuple(map(int, field.split('-')))
-        for field in nauty_output_str.split(HAS_FOUND_ISOMORPHISM_MSG)[1].strip().split()
-    ]
+def orbit_classes(orbits: Tuple[int, ...]) -> Dict[int, int]:
+    """``{vertex: class}`` from nauty's orbits (``orbits[v]`` = least vertex of v's orbit),
+    classes numbered by ascending least member: the order dreadnaut printed them in."""
+    rank = {least: n for (n, least) in enumerate(sorted(set(orbits)))}
+    return {vertex: rank[least] for (vertex, least) in enumerate(orbits)}
 
 
 def calcEquivGroups(mol_data: MolData, log: Optional[Logger] = None) -> Dict[int, int]:
     if log:
         log.debug("Running Nauty")
 
-    nauty_stdout = generate_nauty_output_from_inputstr(
-        generate_nauty_input_from_moldata(mol_data, log=log),
-        log=log,
-    )
-
-    if len(nauty_stdout) == 0:
-        raise DreadnautError('calcEquivGroups: dreadnaut produced no output')
-    else:
-
-        equivalence_for_atom = nauty_equivalence_dict(nauty_stdout)
-
-        for atom_id in mol_data.atoms.keys():
-            mol_data.atoms[atom_id][EQUIVALENCE_CLASS_KEY] = equivalence_for_atom[atom_id]
-
-        # check for the case the object was initiated from a molecule3D then remap the originids on the output
-        if "Molecule3D_id" in list(mol_data.atoms.values())[0]:
-            equivalence_for_atom = {mol_data.atoms[a]['Molecule3D_id']: symmetry_group_id
-                                    for a, symmetry_group_id in equivalence_for_atom.items()}
-        if log:
-            log.debug("Equivalence groups:\n{0}".format(pretty_equivalence_class_dict(mol_data, equivalence_for_atom)))
-
-        return equivalence_for_atom
-
-
-def nauty_equivalence_dict(nauty_stdout: str) -> Dict[int, int]:
-    orbital_data = nauty_stdout.split("seconds")[-1].strip()
-
-    def eval_group_field(group_field: str) -> List[int]:
-        if ':' in group_field:
-            # Defines a range
-            start, stop = map(int, group_field.split(":"))
-            return [int(x) for x in range(start, stop + 1)]
-        else:
-            return [int(group_field)]
-
-    def eval_group_str(group_str: str) -> List[int]:
-        if '(' in group_str:
-            # Last element is group size '(N)', not needed
-            group_fields = group_str.split()[:-1]
-        else:
-            group_fields = group_str.split()
-        return concat([eval_group_field(group_field) for group_field in group_fields])
-
-    try:
-        equivalence_groups = [
-            eval_group_str(group_str)
-            for group_str in orbital_data.split(";")
-            if group_str
-        ]
-    except Exception as e:
-        raise DreadnautError('could not parse dreadnaut orbits {0!r}: {1}'.format(orbital_data, e)) from e
+    graph = molecule_graph(mol_data)
+    if log:
+        log.debug('Nauty graph: {0} vertices, {1} cells'.format(graph.n, len(graph.partition)))
 
     equivalence_for_atom = {
-        nauty_to_atb(index): n
-        for n, list_of_indices in enumerate(equivalence_groups)
-        for index in list_of_indices
+        nauty_to_atb(vertex): n
+        for (vertex, n) in orbit_classes(atb_nauty.automorphisms(graph).orbits).items()
     }
+
+    for atom_id in mol_data.atoms.keys():
+        mol_data.atoms[atom_id][EQUIVALENCE_CLASS_KEY] = equivalence_for_atom[atom_id]
+
+    # check for the case the object was initiated from a molecule3D then remap the originids on the output
+    if "Molecule3D_id" in list(mol_data.atoms.values())[0]:
+        equivalence_for_atom = {mol_data.atoms[a]['Molecule3D_id']: symmetry_group_id
+                                for a, symmetry_group_id in equivalence_for_atom.items()}
+    if log:
+        log.debug("Equivalence groups:\n{0}".format(pretty_equivalence_class_dict(mol_data, equivalence_for_atom)))
 
     return equivalence_for_atom
 
@@ -188,41 +100,6 @@ def pretty_equivalence_class_dict(mol_data: MolData, equivalence_dict: Dict[int,
         )
         for equivalence_class in sorted(set(equivalence_dict.values()))
     )
-
-
-def _kill_process_group(proc: subprocess.Popen) -> None:
-    try:
-        os.killpg(proc.pid, signal.SIGKILL)
-    except (ProcessLookupError, PermissionError):
-        pass
-
-
-def _run(args: List[str], stdin: str, log: Optional[Logger] = None, timeout: Optional[float] = None) -> str:
-    """Run dreadnaut on ``stdin`` and return its stripped stdout. dreadnaut runs in its own
-    session so the whole process group can be killed on a timeout or on any exception
-    (a Celery soft time limit included). Raises DreadnautError on a timeout, a non-zero
-    exit code or anything on stderr (dreadnaut reports bad input there and still exits 0)."""
-    timeout = DREADNAUT_TIMEOUT if timeout is None else timeout
-    with tempfile.TemporaryFile(buffering=0) as tmp:
-        tmp.write(stdin.encode())
-        tmp.seek(0)
-        with subprocess.Popen(args, stdin=tmp, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                              start_new_session=True) as proc:
-            try:
-                stdout, stderr = proc.communicate(timeout=timeout)
-            except subprocess.TimeoutExpired:
-                _kill_process_group(proc)
-                raise DreadnautError('dreadnaut timed out after {0} s'.format(timeout)) from None
-            except BaseException:
-                _kill_process_group(proc)
-                raise
-
-    stderr_text = stderr.decode(errors='replace').strip()
-    if log and stderr_text:
-        log.debug(stderr_text)
-    if proc.returncode != 0 or stderr_text:
-        raise DreadnautError('dreadnaut failed (exit code {0}): {1}'.format(proc.returncode, stderr_text[:2000]))
-    return stdout.strip().decode()
 
 
 # ---------------------------------------------------------------------------------------
@@ -254,10 +131,10 @@ def atom_vertex_map(mol_data: MolData) -> Dict[int, int]:
 
 
 def stereo_graph(mol_data: MolData, orientations: Dict[int, int], cis_pairs: List[Tuple[int, int]],
-                 invert: bool = False) -> str:
-    """dreadnaut input (digraph) for the molecule plus stereo gadgets; ``invert`` builds
-    the mirror image. Every atom keeps its constitutional colour cell; gadget vertices
-    get cells of their own, which sort after the numeric atom descriptors."""
+                 invert: bool = False) -> atb_nauty.Graph:
+    """The molecule plus stereo gadgets, as a digraph; ``invert`` builds the mirror image.
+    Every atom keeps its constitutional colour cell; gadget vertices get cells of their
+    own, which sort after the numeric atom descriptors."""
     vertex_of = atom_vertex_map(mol_data)
     out_edges: Dict[int, set] = {vertex: set() for vertex in vertex_of.values()}
     cells: Dict[str, List[int]] = {}
@@ -299,43 +176,32 @@ def stereo_graph(mol_data: MolData, orientations: Dict[int, int], cis_pairs: Lis
         undirected(cis, vertex_of[a])
         undirected(cis, vertex_of[b])
 
-    n_vertices = len(out_edges)
-    edges = ';'.join(
-        '{0}:{1}'.format(vertex, ' '.join(str(target) for target in sorted(out_edges[vertex])))
-        for vertex in range(n_vertices) if out_edges[vertex]
+    return atb_nauty.Graph(
+        len(out_edges),
+        adjacency={vertex: sorted(targets) for (vertex, targets) in out_edges.items()},
+        directed=True,
+        partition=[sorted(cells[cell]) for cell in sorted(cells)],
     )
-    partition = '|'.join(
-        ','.join(str(vertex) for vertex in sorted(cells[cell]))
-        for cell in sorted(cells)
-    )
-    return 'n={0} d g {1}. f=[{2}]'.format(n_vertices, edges, partition)
 
 
 def stereo_orbits(mol_data: MolData, orientations: Dict[int, int], cis_pairs: List[Tuple[int, int]],
                   log: Optional[Logger] = None) -> Tuple[Dict[int, int], bool]:
     """Equivalence classes under every orientation-respecting automorphism, proper or
-    improper, plus whether an improper one (a mirror) exists. Two dreadnaut runs: the
-    orbits of the proper automorphisms, then the isomorphism onto the mirror image."""
+    improper, plus whether an improper one (a mirror) exists. Two nauty questions: the
+    orbits of the proper automorphisms, then an isomorphism onto the mirror image."""
     vertex_of = atom_vertex_map(mol_data)
     atom_of = {vertex: atom_id for (atom_id, vertex) in vertex_of.items()}
     graph = stereo_graph(mol_data, orientations, cis_pairs)
     mirror = stereo_graph(mol_data, orientations, cis_pairs, invert=True)
 
-    proper_output = generate_nauty_output_from_inputstr(graph + ' c xo', log=log)
-    if not proper_output:
-        raise DreadnautError('dreadnaut produced no output for the stereo graph')
-    orbit_of_vertex = nauty_equivalence_dict(proper_output)  # keys are vertex + 1
-    orbit = {atom_of[vertex]: orbit_of_vertex[vertex + 1] for vertex in atom_of}
+    orbit_of_vertex = orbit_classes(atb_nauty.automorphisms(graph).orbits)
+    orbit = {atom_of[vertex]: orbit_of_vertex[vertex] for vertex in atom_of}
 
-    mirror_output = generate_nauty_output_from_inputstr(graph + ' c x @ ' + mirror + ' x ##', log=log)
-    if HAS_FOUND_ISOMORPHISM_MSG in mirror_output:
-        has_mirror = True
-    elif HAS_NO_ISOMORPHISM_MSG in mirror_output:
-        has_mirror = False
-    else:
-        raise DreadnautError('dreadnaut gave no isomorphism verdict for the mirror image: {0!r}'.format(
-            mirror_output[-2000:]))
+    to_mirror = atb_nauty.isomorphism(graph, mirror)
+    has_mirror = to_mirror is not None
     if has_mirror:
+        # Any isomorphism onto the mirror will do: the improper symmetries are one coset
+        # of the proper ones, so the merged orbits do not depend on which one nauty finds.
         parent = {}
 
         def find(x):
@@ -343,8 +209,9 @@ def stereo_orbits(mol_data: MolData, orientations: Dict[int, int], cis_pairs: Li
                 x = parent[x]
             return x
 
-        for (vertex, image) in get_partition_from_nauty_output(mirror_output):
-            if vertex in atom_of and image in atom_of:
+        for vertex in atom_of:
+            image = to_mirror[vertex]
+            if image in atom_of:
                 (a, b) = (find(orbit[atom_of[vertex]]), find(orbit[atom_of[image]]))
                 if a != b:
                     parent[a] = b
@@ -354,7 +221,3 @@ def stereo_orbits(mol_data: MolData, orientations: Dict[int, int], cis_pairs: Li
         log.debug('Stereo orbits: {0} proper, mirror image {1}'.format(
             len(set(orbit_of_vertex.values())), 'found' if has_mirror else 'absent'))
     return orbit, has_mirror
-
-
-if __name__ == '__main__':
-    pass

@@ -6,12 +6,11 @@
 
 * ATB Outputs python module: `https://github.com/ATB-UQ/atb_outputs.git` (provides `MolData`; declared in `setup.cfg` as a `git+ssh` dependency, so in the platform venv install it first / use `--no-deps`)
 
-* Nauty: This modules relies on the `dreadnaut` executable which is part of the `nauty` package.
-Nauty can very easily be installed from [source](http://users.cecs.anu.edu.au/~bdm/nauty/) or using a package manager such as `homebrew` for Mac OS X users.
+* `atb_nauty` (`https://github.com/ATB-UQ/atb_nauty.git`): nauty 2.8.8 in process, a C extension that `pip install` builds from source (it needs only a C compiler). Until 2026-10 this module ran nauty as the `dreadnaut` program from a vendored nauty 2.5r9 build; that program, its `DREADNAUT_EXECUTABLE` setting and the import-time check that it existed are gone.
 
 # Configuration
 
-* `dreadnaut` is resolved from the `DREADNAUT_EXECUTABLE` environment variable, defaulting to the ATB platform's vendored copy (`<ATB_ROOT>/vendor/nauty/dreadnaut`, built by `scripts/fetch_vendor_deps.sh`). The module asserts it exists at import time.
+* Nothing of its own. `ATB_NAUTY_MAX_VERTICES` (read by `atb_nauty`, default 20 000) caps the graph size nauty is given, molecule plus stereo gadgets (up to 9 extra vertices per tetrahedral centre).
 
 # What "chemically equivalent" means here
 
@@ -65,16 +64,19 @@ Please see the documentation of the `atb_outputs` module for further description
 Status: live-production support. `core.atb.atb` calls `getChemEquivGroups` for every
 topology (equivalence groups drive charge/parameter symmetrisation). Other importers:
 `NMR_Interface`, the website v0.1 API (three modules import the constant
-`ALL_EXCEPTION_SEARCHING_KEYWORDS`, so a missing `dreadnaut` breaks them too),
+`ALL_EXCEPTION_SEARCHING_KEYWORDS`),
 `core/testing/equivalence_sweep.py`, `atb_molgraph`'s benchmarks and a `PyMultifitESP` example.
 `Blind_RMSD` (retired 2026-10-07) was the only caller of `partial_mol_data_for_pdbstr` and of
 the cross-molecule `get_chemical_equivalence_accross` (deleted in the 2026-10 review, with the
 CLI's `--other-pdbs`); `fragment_merger` does not import it.
-Every dreadnaut run has a wall-clock limit (`ATB_CHEMICAL_EQUIVALENCE_DREADNAUT_TIMEOUT`,
-default 60 s) and is killed by process group on a timeout or any exception; a timeout, a
-non-zero exit, anything on dreadnaut's stderr, empty output or a mirror run without an
-`identical.`/`different.` verdict raises `NautyInterface.DreadnautError`. A missing
-`dreadnaut` breaks `import chemical_equivalence.config`, hence `import core.atb.atb`.
+nauty is asked two things, both invariants of the coloured graph (so the answers do not
+depend on the nauty version or the vertex numbering): the automorphism orbits, and whether
+the stereo graph is isomorphic to its mirror image. Each call is in process and cannot be
+interrupted, so it has no timeout of its own: a molecular graph takes well under a
+millisecond (the 252-atom nanotube 0.27 ms), the callers' own limits (Celery
+`soft_time_limit`, the fcgid busy timeout) still apply, and `atb_nauty` refuses a graph over
+`ATB_NAUTY_MAX_VERTICES` before calling nauty. Bad input (an atom id outside 1..N, for
+instance) raises `atb_nauty.NautyError`, also importable as `NautyInterface.DreadnautError`.
 `calcChemEquivalency.py` also has a small `__main__` argparse entry point.
 `examples/test.py` (`Molecule3D_example`) additionally needs the `NXMol`
 (`chemistry_data_structure`) sibling.
