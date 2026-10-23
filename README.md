@@ -10,7 +10,8 @@
 
 # Configuration
 
-* Nothing of its own. `ATB_NAUTY_MAX_VERTICES` (read by `atb_nauty`, default 20 000) caps the graph size nauty is given, molecule plus stereo gadgets (up to 9 extra vertices per tetrahedral centre).
+* `ATB_CHEMICAL_EQUIVALENCE_STEREO_IN_PROCESS_MAX_VERTICES` (default 2 000) and `ATB_CHEMICAL_EQUIVALENCE_NAUTY_TIMEOUT` (seconds, default 60): a stereo graph over that many vertices is asked in a forked child under that timeout (`config.py`).
+* `ATB_NAUTY_MAX_VERTICES` (read by `atb_nauty`, default 20 000) caps the graph size nauty is given, molecule plus stereo gadgets (up to 9 extra vertices per tetrahedral centre).
 
 # What "chemically equivalent" means here
 
@@ -71,11 +72,15 @@ the cross-molecule `get_chemical_equivalence_accross` (deleted in the 2026-10 re
 CLI's `--other-pdbs`); `fragment_merger` does not import it.
 nauty is asked two things, both invariants of the coloured graph (so the answers do not
 depend on the nauty version or the vertex numbering): the automorphism orbits, and whether
-the stereo graph is isomorphic to its mirror image. Each call is in process and cannot be
-interrupted, so it has no timeout of its own: a molecular graph takes well under a
-millisecond (the 252-atom nanotube 0.27 ms), the callers' own limits (Celery
-`soft_time_limit`, the fcgid busy timeout) still apply, and `atb_nauty` refuses a graph over
-`ATB_NAUTY_MAX_VERTICES` before calling nauty. Bad input (an atom id outside 1..N, for
+the stereo graph is isomorphic to its mirror image. A call is in process and cannot be
+interrupted: a molecular graph takes well under a millisecond (the 252-atom nanotube
+0.27 ms), and `atb_nauty` refuses a graph over `ATB_NAUTY_MAX_VERTICES` before calling nauty.
+The stereo graph is a digraph, and over a few thousand vertices its run time stops
+following its size (G2 corpus, 2026-10-23: 1 s to 250 s per call between 4,000 and 7,000
+vertices). Above `STEREO_IN_PROCESS_MAX_VERTICES` (2 000; at most 7.5 s seen below it) each
+of the two calls runs in a forked child that is killed after `NAUTY_TIMEOUT` (60 s,
+dreadnaut's old limit), and a timeout raises `NautyError` as dreadnaut's did. The callers'
+own limits (Celery `soft_time_limit`, the fcgid busy timeout) nest outside that. Bad input (an atom id outside 1..N, for
 instance) raises `atb_nauty.NautyError`, also importable as `NautyInterface.DreadnautError`.
 `calcChemEquivalency.py` also has a small `__main__` argparse entry point.
 `examples/test.py` (`Molecule3D_example`) additionally needs the `NXMol`

@@ -4,12 +4,18 @@ Two questions are asked of nauty, and both answers are invariants of the coloure
 not artefacts of a nauty version or of the vertex numbering: the orbits of the
 automorphism group, and whether the stereo graph is isomorphic to its mirror image.
 """
-from typing import Union, Optional, List, Dict, Tuple
+import os
+import pickle
+import select
+import signal
+import time
+from typing import Any, Callable, Union, Optional, List, Dict, Tuple
 from itertools import groupby
 
 import atb_nauty
 from atb_nauty import NautyError
 
+from chemical_equivalence import config
 from chemical_equivalence.helpers.types_helpers import Logger
 from chemical_equivalence.helpers.atoms import EQUIVALENCE_CLASS_KEY
 
@@ -134,7 +140,8 @@ def stereo_graph(mol_data: MolData, orientations: Dict[int, int], cis_pairs: Lis
                  invert: bool = False) -> atb_nauty.Graph:
     """The molecule plus stereo gadgets, as a digraph; ``invert`` builds the mirror image.
     Every atom keeps its constitutional colour cell; gadget vertices get cells of their
-    own, which sort after the numeric atom descriptors."""
+    own, which sort after the numeric atom descriptors. No vertex invariant: atb_nauty's
+    ``adjacencies`` made these graphs 3x slower on the G2 corpus (2026-10-23)."""
     vertex_of = atom_vertex_map(mol_data)
     out_edges: Dict[int, set] = {vertex: set() for vertex in vertex_of.values()}
     cells: Dict[str, List[int]] = {}
@@ -193,11 +200,15 @@ def stereo_orbits(mol_data: MolData, orientations: Dict[int, int], cis_pairs: Li
     atom_of = {vertex: atom_id for (atom_id, vertex) in vertex_of.items()}
     graph = stereo_graph(mol_data, orientations, cis_pairs)
     mirror = stereo_graph(mol_data, orientations, cis_pairs, invert=True)
+    # an in-process nauty call cannot be interrupted, so a large stereo graph is asked in a
+    # child that can be (config.STEREO_IN_PROCESS_MAX_VERTICES)
+    bounded = graph.n > config.STEREO_IN_PROCESS_MAX_VERTICES
+    ask = (lambda fn: run_bounded(fn, config.NAUTY_TIMEOUT, graph.n)) if bounded else (lambda fn: fn())
 
-    orbit_of_vertex = orbit_classes(atb_nauty.automorphisms(graph).orbits)
+    orbit_of_vertex = orbit_classes(ask(lambda: atb_nauty.automorphisms(graph).orbits))
     orbit = {atom_of[vertex]: orbit_of_vertex[vertex] for vertex in atom_of}
 
-    to_mirror = atb_nauty.isomorphism(graph, mirror)
+    to_mirror = ask(lambda: atb_nauty.isomorphism(graph, mirror))
     has_mirror = to_mirror is not None
     if has_mirror:
         # Any isomorphism onto the mirror will do: the improper symmetries are one coset
@@ -221,3 +232,57 @@ def stereo_orbits(mol_data: MolData, orientations: Dict[int, int], cis_pairs: Li
         log.debug('Stereo orbits: {0} proper, mirror image {1}'.format(
             len(set(orbit_of_vertex.values())), 'found' if has_mirror else 'absent'))
     return orbit, has_mirror
+
+
+def run_bounded(fn: Callable[[], Any], timeout: float, n_vertices: int) -> Any:
+    """``fn()`` computed in a forked child that is killed after ``timeout`` seconds (then
+    NautyError, as a dreadnaut timeout was). The child does nothing but call nauty and pickle
+    the answer down a pipe; it is killed on every way out of here, BaseException included
+    (a Celery soft time limit, say)."""
+    (read_fd, write_fd) = os.pipe()
+    pid = os.fork()
+    if pid == 0:  # the child: never return into the caller's code
+        status = 0
+        try:
+            os.close(read_fd)
+            try:
+                payload = pickle.dumps((True, fn()))
+            except BaseException as exc:  # noqa: BLE001
+                payload = pickle.dumps((False, '{0}: {1}'.format(type(exc).__name__, exc)))
+            with os.fdopen(write_fd, 'wb') as fh:
+                fh.write(payload)
+        except BaseException:  # noqa: BLE001
+            status = 1
+        finally:
+            os._exit(status)
+    os.close(write_fd)
+    chunks = []
+    reaped = False
+    try:
+        deadline = time.monotonic() + timeout
+        while True:
+            left = deadline - time.monotonic()
+            if left <= 0:
+                raise NautyError('nauty timed out after {0:g} s on a {1}-vertex stereo graph'.format(timeout, n_vertices))
+            (ready, _, _) = select.select([read_fd], [], [], left)
+            if ready:
+                chunk = os.read(read_fd, 1 << 20)
+                if not chunk:
+                    break
+                chunks.append(chunk)
+        os.waitpid(pid, 0)
+        reaped = True
+    finally:
+        os.close(read_fd)
+        if not reaped:
+            try:
+                os.kill(pid, signal.SIGKILL)
+            except ProcessLookupError:
+                pass
+            os.waitpid(pid, 0)
+    if not chunks:
+        raise NautyError('nauty child exited without an answer ({0}-vertex stereo graph)'.format(n_vertices))
+    (ok, value) = pickle.loads(b''.join(chunks))
+    if not ok:
+        raise NautyError('nauty failed in the child: ' + value)
+    return value

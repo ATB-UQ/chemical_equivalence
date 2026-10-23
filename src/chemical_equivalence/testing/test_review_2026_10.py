@@ -2,13 +2,14 @@
 
 Run with:  /home/atb/ATB/.venv/bin/python -m pytest src/chemical_equivalence/testing -v
 """
+import time
 from os.path import dirname, join
 
 import pytest
 
 from atb_outputs.mol_data import MolData
 from chemical_equivalence.calcChemEquivalency import getChemEquivGroups
-from chemical_equivalence import NautyInterface
+from chemical_equivalence import NautyInterface, config
 from chemical_equivalence.NautyInterface import DreadnautError, NautyError
 
 FIXTURES = dirname(__file__)
@@ -73,6 +74,27 @@ def test_oversized_graph_is_refused_before_nauty(monkeypatch):
     mol_data = MolData(open(join(FIXTURES, 'chlorocyclohexane.pdb')).read())
     with pytest.raises(NautyError, match='ATB_NAUTY_MAX_VERTICES'):
         NautyInterface.calcEquivGroups(mol_data)
+
+
+@pytest.mark.parametrize('name', ['chlorocyclohexane.pdb', '(1R,3S)-1,3-dibromo-1,3-dichloropropane.pdb',
+                                  '(1S,3S)-1,3-dibromo-1,3-dichloropropane.pdb'])
+def test_large_stereo_graphs_get_the_same_answer_from_a_child(monkeypatch, name):
+    # Over STEREO_IN_PROCESS_MAX_VERTICES both nauty questions go to a forked child.
+    pdb = open(join(FIXTURES, name)).read()
+    getChemEquivGroups(in_process := MolData(pdb))
+    monkeypatch.setattr(config, 'STEREO_IN_PROCESS_MAX_VERTICES', 0)
+    getChemEquivGroups(in_child := MolData(pdb))
+    assert in_child.equivalence_details == in_process.equivalence_details
+
+
+def test_bounded_run_times_out_kills_the_child_and_passes_errors_on():
+    started = time.monotonic()
+    with pytest.raises(NautyError, match='timed out after 0.3 s'):
+        NautyInterface.run_bounded(lambda: time.sleep(30), 0.3, 5000)
+    assert time.monotonic() - started < 5
+    with pytest.raises(NautyError, match='ValueError: boom'):
+        NautyInterface.run_bounded(lambda: (_ for _ in ()).throw(ValueError('boom')), 5, 10)
+    assert NautyInterface.run_bounded(lambda: tuple(range(100000)), 5, 10) == tuple(range(100000))
 
 
 def test_orbit_numbering_is_by_least_member():
