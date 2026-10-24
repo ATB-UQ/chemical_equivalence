@@ -68,7 +68,7 @@ def test_nauty_error_is_still_a_dreadnaut_error():
 
 
 def test_oversized_graph_is_refused_before_nauty(monkeypatch):
-    # The size cap replaces the dreadnaut timeout: an in-process call cannot be interrupted.
+    # atb_nauty's size cap refuses a graph before nauty runs: an in-process call cannot be interrupted.
     import atb_nauty
     monkeypatch.setattr(atb_nauty, 'MAX_VERTICES', 10)
     mol_data = MolData(open(join(FIXTURES, 'chlorocyclohexane.pdb')).read())
