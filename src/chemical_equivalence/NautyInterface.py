@@ -71,7 +71,8 @@ def orbit_classes(orbits: Tuple[int, ...]) -> Dict[int, int]:
     return {vertex: rank[least] for (vertex, least) in enumerate(orbits)}
 
 
-def calcEquivGroups(mol_data: MolData, log: Optional[Logger] = None) -> Dict[int, int]:
+def calc_equiv_groups_by_atom_id(mol_data: MolData, log: Optional[Logger] = None) -> Dict[int, int]:
+    """Constitutional equivalence classes keyed by MolData atom id (what the stereo treatment works on)."""
     if log:
         log.debug("Running Nauty")
 
@@ -87,14 +88,25 @@ def calcEquivGroups(mol_data: MolData, log: Optional[Logger] = None) -> Dict[int
     for atom_id in mol_data.atoms.keys():
         mol_data.atoms[atom_id][EQUIVALENCE_CLASS_KEY] = equivalence_for_atom[atom_id]
 
-    # check for the case the object was initiated from a molecule3D then remap the originids on the output
-    if "Molecule3D_id" in list(mol_data.atoms.values())[0]:
-        equivalence_for_atom = {mol_data.atoms[a]['Molecule3D_id']: symmetry_group_id
-                                for a, symmetry_group_id in equivalence_for_atom.items()}
     if log:
         log.debug("Equivalence groups:\n{0}".format(pretty_equivalence_class_dict(mol_data, equivalence_for_atom)))
 
     return equivalence_for_atom
+
+
+def to_molecule3d_ids(mol_data: MolData, by_atom_id: Dict[int, Any]) -> Dict[Any, Any]:
+    """Re-key a MolData-atom-id dict by the Molecule3D atom ids when the MolData was built from a Molecule3D."""
+    if "Molecule3D_id" in list(mol_data.atoms.values())[0]:
+        return {mol_data.atoms[a]['Molecule3D_id']: value for a, value in by_atom_id.items()}
+    return by_atom_id
+
+
+def calcEquivGroups(mol_data: MolData, log: Optional[Logger] = None) -> Dict[int, int]:
+    """
+    Constitutional equivalence classes. Keyed by MolData atom id, or by the Molecule3D atom ids when
+    the MolData was built from a Molecule3D.
+    """
+    return to_molecule3d_ids(mol_data, calc_equiv_groups_by_atom_id(mol_data, log))
 
 
 def pretty_equivalence_class_dict(mol_data: MolData, equivalence_dict: Dict[int, int]) -> str:
