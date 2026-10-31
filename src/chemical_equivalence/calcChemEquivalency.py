@@ -4,7 +4,8 @@ from itertools import groupby
 from operator import itemgetter
 
 from chemical_equivalence.log_helpers import print_stderr
-from chemical_equivalence.NautyInterface import calcEquivGroups, pretty_equivalence_class_dict, stereo_orbits
+from chemical_equivalence.NautyInterface import calc_equiv_groups_by_atom_id, pretty_equivalence_class_dict, \
+    stereo_orbits, to_molecule3d_ids
 from chemical_equivalence.double_bond import double_bonds as detect_double_bonds
 from chemical_equivalence.stereo import (tetrahedral_orientations, cis_pairs, stereo_sources, acyclic_double_bonds,
                                          bond_distances_from, merge_distant_splits, renumber)
@@ -49,7 +50,8 @@ def getChemEquivGroups(
     (0 when the molecule has no stereo element), kept for the old ``n_iterations`` slot.
     ``molData.equivalence_details`` records how the answer was reached.
     """
-    constitutional = calcEquivGroups(molData, log)
+    # by MolData atom id throughout (as the stereo treatment returns them); re-keyed once at the end
+    constitutional = calc_equiv_groups_by_atom_id(molData, log)
     strict = dict(constitutional)
     details: Dict[str, Any] = {
         'constitutional': dict(constitutional),
@@ -103,9 +105,7 @@ def getChemEquivGroups(
         else:
             log.debug('No diastereotopic atoms.')
 
-    if "Molecule3D_id" in list(molData.atoms.values())[0]:
-        effective = {molData.atoms[a]['Molecule3D_id']: c for (a, c) in effective.items()}
-    return (effective, n_runs)
+    return (to_molecule3d_ids(molData, effective), n_runs)
 
 
 def atomic_equivalence_dict_to_group_equivalence_dict(atomic_equivalence_dict: Dict[int, int]) -> Dict[int, List[int]]:
